@@ -1,13 +1,66 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- TABLAS CATÁLOGO ---
+
+model Departamento {
+  id          Int        @id @default(autoincrement())
+  nombre      String     @unique
+  descripcion String?
+  empleados   Empleado[]
+}
+
+// --- TABLA DE EMPLEADOS (Contexto El Salvador) ---
+
+model Empleado {
+  id             Int               @id @default(autoincrement())
+  nombres        String
+  apellidos      String
+  dui            String            @unique // Formato: 00000000-0
+  nit            String?           @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
+  nup_afp        String?           @unique // Número Único Previsional
+  salarioBase    Decimal           @db.Decimal(10, 2)
+  fechaIngreso   DateTime          @default(now())
+  estado         Boolean           @default(true) // Activo o Inactivo
+  
+  departamentoId Int
+  departamento   Departamento      @relation(fields: [departamentoId], references: [id])
+  
+  planillas      DetallePlanilla[]
+}
+
+// --- TABLAS DE PLANILLA ---
+
+model Planilla {
+  id          Int               @id @default(autoincrement())
+  mes         Int               // 1 al 12
+  anio        Int               // Ej: 2026
+  tipo        String            // "Mensual" o "Quincenal"
+  estado      String            @default("Borrador") // Borrador, Aprobada, Pagada
+  fechaCierre DateTime?         
+  detalles    DetallePlanilla[]
+}
+
+model DetallePlanilla {
+  id              Int      @id @default(autoincrement())
+  planillaId      Int
+  empleadoId      Int
+  
+  // La "Foto" financiera del mes
+  salarioBase     Decimal  @db.Decimal(10, 2)
+  isss            Decimal  @db.Decimal(10, 2)
+  afp             Decimal  @db.Decimal(10, 2)
+  renta           Decimal  @db.Decimal(10, 2)
+  otrosDescuentos Decimal  @default(0.00) @db.Decimal(10, 2)
+  bonos           Decimal  @default(0.00) @db.Decimal(10, 2)
+  salarioLiquido  Decimal  @db.Decimal(10, 2)
+
+  planilla        Planilla @relation(fields: [planillaId], references: [id])
+  empleado        Empleado @relation(fields: [empleadoId], references: [id])
 }
