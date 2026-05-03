@@ -1,23 +1,27 @@
+// archivo: backend/src/index.js
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// Inicializamos la aplicación
+// Importamos nuestras nuevas rutas
+const departamentoRoutes = require('./routes/departamento.routes.js');
+const empleadoRoutes = require('./routes/empleado.routes.js');
+
 const app = express();
 
-// Middlewares (Para que tu backend entienda JSON y permita peticiones del frontend)
 app.use(cors());
 app.use(express.json());
 
-// Una ruta de prueba para verificar que el servidor funciona
+// Configuramos las URLs base para nuestra API
+app.use('/api/departamentos', departamentoRoutes);
+app.use('/api/empleados', empleadoRoutes);
+
 app.get('/', (req, res) => {
     res.json({ mensaje: '¡El servidor del Sistema de Planillas SV está funcionando!' });
 });
 
-// Definimos el puerto (usaremos el 3000 por defecto)
 const PORT = process.env.PORT || 3000;
 
-// Encendemos el servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
