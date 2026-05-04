@@ -1,140 +1,219 @@
 <template>
   <q-page padding class="bg-grey-2">
-    <q-btn flat icon="arrow_back" label="Volver al Inicio" color="primary" class="q-mb-md" to="/" />
+    <div class="no-print">
+      <q-btn flat icon="arrow_back" label="Volver" color="primary" class="q-mb-md" to="/" />
+      <div class="text-h4 text-primary q-mb-md text-weight-bold">Generación de Planillas</div>
 
-    <div class="text-h4 text-primary q-mb-md">Generación y Cierre de Planillas</div>
-
-    <q-card flat bordered class="q-mb-md">
-      <q-card-section>
-        <div class="row q-col-gutter-md items-center">
+      <q-card flat bordered class="q-mb-lg">
+        <q-card-section class="row q-col-gutter-md items-center">
           <div class="col-12 col-md-3">
-            <q-select outlined v-model="mesPlanilla" :options="meses" label="Mes a calcular" />
+            <q-select outlined v-model="mesPlanilla" :options="meses" label="Mes" />
           </div>
-          <div class="col-12 col-md-3">
+          <div class="col-12 col-md-2">
             <q-input outlined v-model.number="anioPlanilla" type="number" label="Año" />
           </div>
-          <div class="col-12 col-md-3">
-            <q-btn label="1. Calcular" color="primary" size="lg" icon="calculate" class="full-width" @click="generarPlanilla" />
-          </div>
-          <div class="col-12 col-md-3" v-if="detallePlanilla.length > 0">
-            <div class="row q-col-gutter-sm">
-              <div class="col-6">
-                <q-btn label="Guardar" color="positive" icon="save" class="full-width" @click="guardarEnHistorial" />
-              </div>
-              <div class="col-6">
-                <q-btn label="PDF" color="red" icon="picture_as_pdf" class="full-width" @click="exportarPDF" />
-              </div>
+          <div class="col-12 col-md-7">
+            <div class="row justify-end q-gutter-sm">
+              <q-btn label="1. Calcular" color="primary" icon="calculate" @click="generarPlanilla" />
+              <q-btn v-if="detallePlanilla.length > 0" label="2. Guardar" color="positive" icon="save" @click="guardarEnHistorial" />
+              <q-btn v-if="detallePlanilla.length > 0" label="3. Exportar PDF" color="red" icon="picture_as_pdf" @click="exportarPDF" />
             </div>
           </div>
-        </div>
-      </q-card-section>
-    </q-card>
+        </q-card-section>
+      </q-card>
 
-    <div id="zona-impresion">
-      <div v-if="imprimiendo" class="text-h4 text-center q-mb-md">Planilla Mensual: {{ mesPlanilla }} {{ anioPlanilla }}</div>
-      
       <q-table
-        title="Detalle de Planilla (ISSS, AFP y Renta)"
         :rows="detallePlanilla"
         :columns="columnasPlanilla"
         row-key="empleadoNombre"
         flat bordered
-        :pagination="{ rowsPerPage: 0 }"
         hide-pagination
-        no-data-label="Genera una planilla para ver los cálculos"
-      >
-        <template v-slot:body-cell-salarioLiquido="props">
-          <q-td :props="props" class="text-bold text-positive">
-            {{ props.value }}
-          </q-td>
-        </template>
-      </q-table>
+        :pagination="{ rowsPerPage: 0 }"
+      />
+    </div>
+
+    <div class="only-print report-wrapper">
+      <div class="report-header">
+        <h1>REPORTE MENSUAL DE PLANILLA</h1>
+        <p>Sistema de Recursos Humanos - El Salvador</p>
+      </div>
+
+      <div class="report-info">
+        <div><strong>Mes:</strong> {{ mesPlanilla }} {{ anioPlanilla }}</div>
+        <div><strong>Fecha de Emisión:</strong> {{ new Date().toLocaleDateString() }}</div>
+        <div><strong>Estado:</strong> Registro Oficial</div>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th class="text-right">Salario Base</th>
+            <th class="text-right">ISSS (3%)</th>
+            <th class="text-right">AFP (7.25%)</th>
+            <th class="text-right">Renta (ISR)</th>
+            <th class="text-right">Líquido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in detallePlanilla" :key="item.empleadoId">
+            <td>{{ item.empleadoNombre }}</td>
+            <td class="text-right">{{ formatDinero(item.salarioBase) }}</td>
+            <td class="text-right">{{ formatDinero(item.isss) }}</td>
+            <td class="text-right">{{ formatDinero(item.afp) }}</td>
+            <td class="text-right">{{ formatDinero(item.renta) }}</td>
+            <td class="text-right text-bold">{{ formatDinero(item.salarioLiquido) }}</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5" class="text-right">TOTAL A PAGAR EN PLANILLA:</td>
+            <td class="text-right">{{ formatDinero(totalPlanilla) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="report-footer">
+        <div class="signature-box">
+          <p>___________________________________</p>
+          <p>Firma y Sello de Contabilidad</p>
+        </div>
+        <p class="disclaimer">Este documento es un comprobante generado por el sistema de RRHH.</p>
+      </div>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuasar } from 'quasar'
 
 const $q = useQuasar()
-
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const mesPlanilla = ref('Mayo')
 const anioPlanilla = ref(new Date().getFullYear())
 const detallePlanilla = ref([])
-const imprimiendo = ref(false)
+
+// Función para dar formato de dinero a los números ($1,200.00)
+const formatDinero = (valor) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(valor)
+}
 
 const columnasPlanilla = [
   { name: 'empleado', label: 'Empleado', field: 'empleadoNombre', align: 'left' },
-  { name: 'salarioBase', label: 'S. Base', field: 'salarioBase', align: 'right', format: val => `$${val}` },
-  { name: 'isss', label: 'ISSS (3%)', field: 'isss', align: 'right', format: val => `$${val}` },
-  { name: 'afp', label: 'AFP (7.25%)', field: 'afp', align: 'right', format: val => `$${val}` },
-  { name: 'renta', label: 'Renta (ISR)', field: 'renta', align: 'right', format: val => `$${val}` },
-  { name: 'salarioLiquido', label: 'Líquido a Pagar', field: 'salarioLiquido', align: 'right', format: val => `$${val}` }
+  { name: 'salarioBase', label: 'S. Base', field: 'salarioBase', align: 'right', format: val => formatDinero(val) },
+  { name: 'isss', label: 'ISSS', field: 'isss', align: 'right', format: val => formatDinero(val) },
+  { name: 'afp', label: 'AFP', field: 'afp', align: 'right', format: val => formatDinero(val) },
+  { name: 'renta', label: 'Renta', field: 'renta', align: 'right', format: val => formatDinero(val) },
+  { name: 'salarioLiquido', label: 'Líquido', field: 'salarioLiquido', align: 'right', format: val => formatDinero(val) }
 ]
 
+const totalPlanilla = computed(() => {
+  return detallePlanilla.value.reduce((acc, item) => acc + Number(item.salarioLiquido), 0)
+})
+
 const generarPlanilla = async () => {
-  try {
-    const respuesta = await fetch('http://localhost:3000/api/planillas/generar')
-    if (respuesta.ok) {
-      detallePlanilla.value = await respuesta.json()
-      $q.notify({ type: 'positive', message: '¡Planilla calculada!', position: 'top' })
-    }
-  } catch (error) {
-    console.error(error)
-    $q.notify({ type: 'negative', message: 'Error de conexión' })
-  }
+  const res = await fetch('http://localhost:3000/api/planillas/generar')
+  detallePlanilla.value = await res.json()
+  $q.notify({ type: 'info', message: 'Planilla calculada' })
 }
 
-// NUEVA FUNCIÓN: Guardar en la base de datos
 const guardarEnHistorial = async () => {
   try {
-    const datosEnvio = {
-      mes: mesPlanilla.value,
-      anio: anioPlanilla.value,
-      detalles: detallePlanilla.value // Mandamos todos los empleados de un solo golpe
-    }
-
-    const respuesta = await fetch('http://localhost:3000/api/planillas/guardar', {
+    const res = await fetch('http://localhost:3000/api/planillas/guardar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datosEnvio)
+      body: JSON.stringify({ mes: mesPlanilla.value, anio: anioPlanilla.value, detalles: detallePlanilla.value })
     })
-    
-    if (respuesta.ok) {
-      $q.notify({ type: 'positive', message: '✅ Planilla guardada en el historial permanentemente.', position: 'top', timeout: 3000 })
-    }
-  } catch (error) {
-    console.error(error)
-    $q.notify({ type: 'negative', message: 'Error al guardar en el historial' })
-  }
+    if (res.ok) $q.notify({ type: 'positive', message: 'Guardado correctamente' })
+  } catch (e) { console.error(e) }
 }
 
-// NUEVA FUNCIÓN: Exportar a PDF (Impresión nativa)
 const exportarPDF = () => {
-  imprimiendo.value = true;
-  setTimeout(() => {
-    window.print(); // Llama a la ventana de impresión/Guardar como PDF del navegador
-    imprimiendo.value = false;
-  }, 500);
+  window.print() 
 }
 </script>
 
-<style>
-/* Estilos para asegurar que la exportación a PDF se vea limpia */
+<style lang="scss">
+/* PANTALLA */
+.only-print { display: none; }
+
+/* IMPRESIÓN */
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    size: letter landscape;
+    margin: 15mm; /* Aumentamos el margen global */
   }
-  #zona-impresion, #zona-impresion * {
-    visibility: visible;
+
+  html, body, .q-layout, .q-page-container, .q-page {
+    min-height: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
   }
-  #zona-impresion {
-    position: absolute;
-    left: 0;
-    top: 0;
+
+  .no-print { display: none !important; }
+  .only-print { display: block !important; }
+
+  /* Contenedor principal con padding superior para evitar que el header del navegador lo tape */
+  .report-wrapper {
+    padding-top: 30px;
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+
+  .report-header {
+    text-align: center;
+    border-bottom: 2px solid #1976D2;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    h1 { color: #1976D2; margin: 0; font-size: 22pt; font-weight: bold; }
+    p { margin: 5px 0; color: #555; font-size: 12pt; }
+  }
+
+  .report-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    font-size: 11pt;
+    font-weight: 500;
+  }
+
+  .report-table {
     width: 100%;
+    border-collapse: collapse;
+    th {
+      background-color: #1976D2 !important;
+      color: white !important;
+      -webkit-print-color-adjust: exact;
+      padding: 12px 8px;
+      text-align: left;
+      font-size: 10pt;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 10pt;
+    }
+    .total-row {
+      background-color: #f9f9f9 !important;
+      font-weight: bold;
+      font-size: 11pt;
+      -webkit-print-color-adjust: exact;
+    }
   }
+
+  .report-footer {
+    margin-top: 60px;
+    text-align: center;
+    .signature-box { margin-bottom: 30px; }
+    .disclaimer { font-size: 8pt; color: #888; }
+  }
+
+  .text-right { text-align: right; }
+  .text-bold { font-weight: bold; }
 }
 </style>

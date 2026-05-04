@@ -5,7 +5,9 @@ const router = express.Router();
 // Importamos las dos funciones desde el controlador
 const {
     generarPlanillaMensual,
-    guardarPlanillaHistorial
+    guardarPlanillaHistorial,
+    obtenerHistorial,
+    obtenerDetalleHistorial
 } = require('../controllers/planilla.controller.js');
 
 /**
@@ -14,7 +16,8 @@ const {
  * (ISSS, AFP, Renta) para mostrarlos en la tabla del frontend.
  */
 router.get('/generar', generarPlanillaMensual);
-
+router.get('/historial', obtenerHistorial);
+router.get('/historial/:id', obtenerDetalleHistorial);
 /**
  * RUTA: POST /api/planillas/guardar
  * Descripción: Recibe la planilla calculada desde el frontend y la guarda 

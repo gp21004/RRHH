@@ -27,7 +27,12 @@
             </q-card-section>
           </q-card>
         </div>
-
+        <div class="col-12 col-md-4">
+        <q-card class="my-card text-center q-pa-md cursor-pointer" @click="$router.push('/historial')">
+          <q-icon name="history" size="100px" color="orange" />
+          <div class="text-h6 q-mt-md">Historial de Planillas</div>
+        </q-card>
+      </div>
       </div>
     </div>
   </q-page>

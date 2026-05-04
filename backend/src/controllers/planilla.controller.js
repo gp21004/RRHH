@@ -50,6 +50,37 @@ const guardarPlanillaHistorial = async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Error al guardar el historial' });
     }
+
+};// Obtener lista de todas las planillas guardadas
+const obtenerHistorial = async (req, res) => {
+    try {
+        const historial = await prisma.planilla.findMany({
+            orderBy: { fechaGeneracion: 'desc' } // La más reciente primero
+        });
+        res.status(200).json(historial);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
-module.exports = { generarPlanillaMensual, guardarPlanillaHistorial };
+// Obtener una planilla específica con sus detalles
+const obtenerDetalleHistorial = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const planilla = await prisma.planilla.findUnique({
+            where: { id: parseInt(id) },
+            include: { detalles: true }
+        });
+        res.status(200).json(planilla);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// No olvides actualizar el exports:
+module.exports = {
+    generarPlanillaMensual,
+    guardarPlanillaHistorial,
+    obtenerHistorial,
+    obtenerDetalleHistorial
+};
