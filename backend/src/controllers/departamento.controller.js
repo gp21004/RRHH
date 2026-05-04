@@ -18,3 +18,13 @@ const crearDepartamento = async (req, res) => {
 };
 
 module.exports = { crearDepartamento };
+const obtenerDepartamentos = async (req, res) => {
+    try {
+        const deptos = await prisma.departamento.findMany();
+        res.status(200).json(deptos);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener departamentos' });
+    }
+};
+
+module.exports = { crearDepartamento, obtenerDepartamentos };
