@@ -6,7 +6,8 @@ const routes = [
       { path: '', component: () => import('pages/IndexPage.vue') }, // El Dashboard
       { path: 'contratacion', component: () => import('pages/ContratacionPage.vue') }, // Módulo 1
       { path: 'planillas', component: () => import('pages/PlanillaPage.vue') }, // Módulo 2
-      { path: 'historial', component: () => import('pages/HistorialPage.vue') } // Módulo 3
+      { path: 'historial', component: () => import('pages/HistorialPage.vue') }, // Módulo 3
+      { path: 'contratos', component: () => import('pages/Contratos.vue') } // Módulo 4
     ]
   },
 

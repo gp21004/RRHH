@@ -19,6 +19,16 @@
         </div>
 
         <div class="col-12 col-sm-6">
+          <q-card class="cursor-pointer q-hoverable" @click="$router.push('/contratos')" v-ripple>
+            <q-card-section class="q-pa-xl bg-white text-info">
+              <q-icon name="description" size="64px" class="q-mb-md" />
+              <div class="text-h5 text-weight-bold">Gestión de Contratos</div>
+              <div class="text-subtitle2 text-grey-7 q-mt-sm">Crea y administra contratos de empleados</div>
+            </q-card-section>
+          </q-card>
+        </div>
+
+        <div class="col-12 col-sm-6">
           <q-card class="cursor-pointer q-hoverable" @click="$router.push('/planillas')" v-ripple>
             <q-card-section class="q-pa-xl bg-white text-secondary">
               <q-icon name="request_quote" size="64px" class="q-mb-md" />
@@ -27,12 +37,16 @@
             </q-card-section>
           </q-card>
         </div>
-        <div class="col-12 col-md-4">
-        <q-card class="my-card text-center q-pa-md cursor-pointer" @click="$router.push('/historial')">
-          <q-icon name="history" size="100px" color="orange" />
-          <div class="text-h6 q-mt-md">Historial de Planillas</div>
-        </q-card>
-      </div>
+
+        <div class="col-12 col-sm-6">
+          <q-card class="cursor-pointer q-hoverable" @click="$router.push('/historial')" v-ripple>
+            <q-card-section class="q-pa-xl bg-white text-orange">
+              <q-icon name="history" size="64px" class="q-mb-md" />
+              <div class="text-h5 text-weight-bold">Historial de Planillas</div>
+              <div class="text-subtitle2 text-grey-7 q-mt-sm">Consulta el historial de planillas generadas</div>
+            </q-card-section>
+          </q-card>
+        </div>
       </div>
     </div>
   </q-page>

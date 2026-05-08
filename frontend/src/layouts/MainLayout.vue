@@ -86,7 +86,11 @@
       <!-- Encabezado Drawer -->
       <q-scroll-area class="fit">
         <div class="q-pa-md">
-          <q-item class="rounded-borders q-mb-md" :active="$route.name === 'dashboard'">
+          <q-item 
+            clickable
+            v-ripple
+            to="/"
+            :active="$route.path === '/'">
             <q-item-section avatar>
               <q-icon name="dashboard" color="primary" size="lg" />
             </q-item-section>
@@ -175,16 +179,32 @@
           <q-item
             clickable
             v-ripple
-            to="/plantillas"
-            :active="$route.path === '/plantillas'"
+            to="/contratacion"
+            :active="$route.path === '/contratacion'"
+            active-class="bg-primary text-white"
+            class="rounded-borders q-mb-sm"
+          >
+            <q-item-section avatar>
+              <q-icon name="people" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Personal</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            clickable
+            v-ripple
+            to="/planillas"
+            :active="$route.path === '/planillas'"
             active-class="bg-primary text-white"
             class="rounded-borders q-mb-md"
           >
             <q-item-section avatar>
-              <q-icon name="template_1" />
+              <q-icon name="table_chart" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>Plantillas</q-item-label>
+              <q-item-label>Planillas</q-item-label>
             </q-item-section>
           </q-item>
 
@@ -212,8 +232,8 @@
           <q-item
             clickable
             v-ripple
-            to="/reportes"
-            :active="$route.path === '/reportes'"
+            to="/historial"
+            :active="$route.path === '/historial'"
             active-class="bg-primary text-white"
             class="rounded-borders q-mb-sm"
           >
@@ -262,10 +282,8 @@
 
 <script setup>
 import { ref } from 'vue'
-//import { useRouter } from 'vue-router'
 
 const showDrawer = ref(true)
-//const router = useRouter()
 
 const toggleDrawer = () => {
   showDrawer.value = !showDrawer.value
@@ -301,13 +319,25 @@ const toggleDrawer = () => {
   gap: 16px;
 }
 
-:deep(.q-py-md) {
-  padding-top: 16px;
-  padding-bottom: 16px;
+:deep(.px-md) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+:deep(.q-pa-md) {
+  padding: 16px;
 }
 
 :deep(.my-md) {
   margin-top: 16px;
   margin-bottom: 16px;
+}
+
+:deep(.flex) {
+  display: flex;
+}
+
+:deep(.items-center) {
+  align-items: center;
 }
 </style>
