@@ -1,7 +1,7 @@
 <template>
-  <q-page class="bg-grey-2 q-pa-lg">
+  <q-page class="bg-grey-2 q-px-lg q-py-md">
     <!-- Header Welcome -->
-    <div class="row items-center q-mb-xl">
+    <div class="row items-center q-mb-lg">
       <div class="col">
         <h1 class="text-h4 text-weight-bold text-grey-9 q-ma-none">¡Bienvenido de vuelta! 👋</h1>
         <p class="text-subtitle2 text-grey-7 q-mt-sm q-mb-none">Aquí tienes un resumen general de tu sistema de RRHH</p>
@@ -12,18 +12,19 @@
     </div>
 
     <!-- KPI Cards -->
-    <div class="row q-col-gutter-md q-mb-lg">
+    <div class="row q-col-gutter-sm q-mb-md">
       <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="kpi-card kpi-blue">
-          <q-card-section class="q-pa-md">
+        <q-card class="kpi-card">
+          <div class="kpi-header kpi-header-blue"></div>
+          <q-card-section class="q-pa-sm">
             <div class="flex items-center justify-between">
               <div>
                 <div class="kpi-number">{{ empleadosCount }}</div>
                 <div class="kpi-label">Empleados Activos</div>
                 <div class="kpi-change">{{ empleadosCount > 0 ? '✓ Activos' : 'Sin datos' }}</div>
               </div>
-              <div class="kpi-icon-container">
-                <q-icon name="people" size="40px" color="primary" />
+              <div class="kpi-icon-container kpi-icon-blue">
+                <q-icon name="people" size="32px" color="white" />
               </div>
             </div>
           </q-card-section>
@@ -31,16 +32,17 @@
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="kpi-card kpi-teal">
-          <q-card-section class="q-pa-md">
+        <q-card class="kpi-card">
+          <div class="kpi-header kpi-header-teal"></div>
+          <q-card-section class="q-pa-sm">
             <div class="flex items-center justify-between">
               <div>
                 <div class="kpi-number">{{ contratosCount }}</div>
                 <div class="kpi-label">Contratos Activos</div>
                 <div class="kpi-change">{{ contratosCount > 0 ? '✓ Vigentes' : 'Sin datos' }}</div>
               </div>
-              <div class="kpi-icon-container">
-                <q-icon name="description" size="40px" color="info" />
+              <div class="kpi-icon-container kpi-icon-teal">
+                <q-icon name="description" size="32px" color="white" />
               </div>
             </div>
           </q-card-section>
@@ -48,16 +50,17 @@
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="kpi-card kpi-green">
-          <q-card-section class="q-pa-md">
+        <q-card class="kpi-card">
+          <div class="kpi-header kpi-header-green"></div>
+          <q-card-section class="q-pa-sm">
             <div class="flex items-center justify-between">
               <div>
                 <div class="kpi-number">${{ (totalPagos / 1000).toFixed(0) }}k</div>
                 <div class="kpi-label">Total en Pagos</div>
                 <div class="kpi-change">{{ totalPagos > 0 ? '✓ Calculado' : 'Sin datos' }}</div>
               </div>
-              <div class="kpi-icon-container">
-                <q-icon name="attach_money" size="40px" color="green" />
+              <div class="kpi-icon-container kpi-icon-green">
+                <q-icon name="attach_money" size="32px" color="white" />
               </div>
             </div>
           </q-card-section>
@@ -65,16 +68,17 @@
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="kpi-card kpi-orange">
-          <q-card-section class="q-pa-md">
+        <q-card class="kpi-card">
+          <div class="kpi-header kpi-header-orange"></div>
+          <q-card-section class="q-pa-sm">
             <div class="flex items-center justify-between">
               <div>
                 <div class="kpi-number">{{ planillasCount }}</div>
                 <div class="kpi-label">Planillas Generadas</div>
                 <div class="kpi-change">{{ planillasCount > 0 ? '✓ Histórico' : 'Sin datos' }}</div>
               </div>
-              <div class="kpi-icon-container">
-                <q-icon name="schedule" size="40px" color="orange" />
+              <div class="kpi-icon-container kpi-icon-orange">
+                <q-icon name="schedule" size="32px" color="white" />
               </div>
             </div>
           </q-card-section>
@@ -83,14 +87,14 @@
     </div>
 
     <!-- Módulos Principales -->
-    <div class="q-mb-lg">
-      <h2 class="text-h5 text-weight-bold text-grey-9 q-mb-md">Módulos principales</h2>
-      <p class="text-body2 text-grey-7 q-mb-md">Accede rápidamente a las funciones principales del sistema</p>
+    <div class="q-mb-md">
+      <h2 class="text-h5 text-weight-bold text-grey-9 q-mb-sm">Módulos principales</h2>
+      <p class="text-body2 text-grey-7 q-mb-md">Accede rápidamente a las funciones principales</p>
 
-      <div class="row q-col-gutter-md">
+      <div class="row q-col-gutter-sm">
         <div class="col-12 col-sm-6 col-md-3">
           <q-card class="module-card cursor-pointer" @click="$router.push('/contratacion')">
-            <q-card-section class="text-center q-pa-lg">
+            <q-card-section class="text-center q-pa-md">
                  <q-avatar
                   size="56px"
                   style="background: #EEF4FF"
@@ -110,7 +114,7 @@
 
         <div class="col-12 col-sm-6 col-md-3">
           <q-card class="module-card cursor-pointer" @click="$router.push('/contratos')">
-            <q-card-section class="text-center q-pa-lg">
+            <q-card-section class="text-center q-pa-md">
               <q-avatar size="56px" style="background: #E3F2FD">
                 <q-icon name="description" size="32px" color="info" />
               </q-avatar>
@@ -123,7 +127,7 @@
 
         <div class="col-12 col-sm-6 col-md-3">
           <q-card class="module-card cursor-pointer" @click="$router.push('/planillas')">
-            <q-card-section class="text-center q-pa-lg">
+            <q-card-section class="text-center q-pa-md">
               <q-avatar size="56px" style="background: #E8F5E9">
                 <q-icon name="request_quote" size="32px" color="positive" />
               </q-avatar>
@@ -136,7 +140,7 @@
 
         <div class="col-12 col-sm-6 col-md-3">
           <q-card class="module-card cursor-pointer" @click="$router.push('/historial')">
-            <q-card-section class="text-center q-pa-lg">
+            <q-card-section class="text-center q-pa-md">
               <q-avatar size="56px" style="background: #FFF3E0">
                 <q-icon name="history" size="32px" color="warning" />
               </q-avatar>
@@ -149,53 +153,29 @@
       </div>
     </div>
 
-    <!-- Resumen Mensual y Distribución -->
-    <div class="row q-col-gutter-md">
-      <!-- Resumen Mensual -->
-      <div class="col-12 col-md-6">
-        <q-card>
+    <!-- Sección Analítica: Gráfico + Resumen Mensual (2 columnas) -->
+    <div class="row q-col-gutter-md q-mb-lg">
+      <!-- Gráfico Distribución Empleados (Izquierda) -->
+      <div class="col-12 col-lg-6">
+        <q-card class="chart-card h-full">
           <q-card-section class="q-pa-md">
-            <div class="flex items-center justify-between q-mb-md">
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none">Resumen mensual</h3>
-              <q-select v-model="mesSeleccionado" :options="meses" outlined dense emit-value map-options class="col-auto" style="width: 140px" />
+            <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mb-md">Distribución de empleados</h3>
+            
+            <div class="chart-container q-mb-md">
+              <ApexChart
+                type="donut"
+                height="280"
+                :options="chartOptions"
+                :series="chartSeries"
+              />
             </div>
 
-            <div class="row q-col-gutter-md">
-              <div class="col-6">
-                <div class="bg-grey-2 q-pa-md rounded-borders">
-                  <div class="text-subtitle2 text-grey-7 q-mb-sm">Total pagado</div>
-                  <div class="text-h5 text-weight-bold text-grey-9">$28,450.00</div>
-                  <div class="text-caption text-positive q-mt-xs">↑ 12% vs abril 2025</div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="bg-grey-2 q-pa-md rounded-borders">
-                  <div class="text-subtitle2 text-grey-7 q-mb-sm">Descuentos totales</div>
-                  <div class="text-h5 text-weight-bold text-grey-9">$6,540.00</div>
-                  <div class="text-caption text-positive q-mt-xs">↑ 8% vs abril 2025</div>
-                </div>
-              </div>
-            </div>
-
-            <q-separator class="q-my-md" />
-
-            <div class="row q-col-gutter-md">
-              <div class="col-4">
-                <div class="text-center">
-                  <div class="text-caption text-grey-7 q-mb-xs">ISSS</div>
-                  <div class="text-h6 text-weight-bold text-grey-9">$1,920.00</div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="text-center">
-                  <div class="text-caption text-grey-7 q-mb-xs">AFP</div>
-                  <div class="text-h6 text-weight-bold text-grey-9">$3,840.00</div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="text-center">
-                  <div class="text-caption text-grey-7 q-mb-xs">Renta</div>
-                  <div class="text-h6 text-weight-bold text-grey-9">$780.00</div>
+            <div class="legend-compact">
+              <div v-for="depto in distribucionEmpleados" :key="depto.nombre" class="legend-item-compact">
+                <div class="legend-color" :style="{ backgroundColor: getColorDepto(depto.nombre) }"></div>
+                <div class="legend-text">
+                  <span class="text-weight-bold">{{ depto.nombre }}</span>
+                  <span class="text-grey-7"> {{ depto.cantidad }}</span>
                 </div>
               </div>
             </div>
@@ -203,38 +183,49 @@
         </q-card>
       </div>
 
-      <!-- Distribución de Empleados -->
-      <div class="col-12 col-md-6">
-        <q-card>
+      <!-- Resumen Mensual (Derecha) -->
+      <div class="col-12 col-lg-6">
+        <q-card class="chart-card h-full">
           <q-card-section class="q-pa-md">
-            <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mb-md">Distribución de empleados</h3>
-            <p class="text-caption text-grey-7 q-mb-md">Por departamento</p>
+            <div class="flex items-center justify-between q-mb-md">
+              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none">Resumen mensual</h3>
+              <q-select v-model="mesSeleccionado" :options="meses" outlined dense emit-value map-options style="width: 120px" />
+            </div>
 
-            <div class="flex items-center justify-center q-mb-md" style="min-height: 120px;">
-              <div class="text-center">
-                <div class="text-h3 text-weight-bold text-grey-9">{{ empleadosCount }}</div>
-                <div class="text-caption text-grey-7">Total</div>
+            <!-- KPIs pequeños de resumen -->
+            <div class="row q-col-gutter-sm q-mb-md">
+              <div class="col-6">
+                <div class="summary-mini">
+                  <div class="summary-label-mini">Total pagado</div>
+                  <div class="summary-value-mini">$28,450</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="summary-mini">
+                  <div class="summary-label-mini">Descuentos</div>
+                  <div class="summary-value-mini">$6,540</div>
+                </div>
               </div>
             </div>
 
-            <q-list separator>
-              <q-item v-for="depto in distribucionEmpleados" :key="depto.nombre">
-                <q-item-section avatar>
-                  <q-icon name="circle" size="12px" :color="getColorDepto(depto.nombre)" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ depto.nombre }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-item-label class="text-weight-bold">{{ depto.cantidad }} ({{ depto.porcentaje }}%)</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item v-if="distribucionEmpleados.length === 0">
-                <q-item-section>
-                  <q-item-label class="text-grey-7">Sin datos disponibles</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
+            <q-separator class="q-my-sm" />
+
+            <!-- Desglose compacto -->
+            <div class="q-mt-md">
+              <div class="text-caption text-weight-bold text-grey-7 q-mb-sm">DESGLOSE</div>
+              <div class="desglose-item">
+                <span>ISSS</span>
+                <span class="text-weight-bold">$1,920</span>
+              </div>
+              <div class="desglose-item">
+                <span>AFP</span>
+                <span class="text-weight-bold">$3,840</span>
+              </div>
+              <div class="desglose-item">
+                <span>Renta</span>
+                <span class="text-weight-bold">$780</span>
+              </div>
+            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -293,6 +284,60 @@ const planillasCount = ref(0)
 const planillasRecientes = ref([])
 const distribucionEmpleados = ref([])
 const loading = ref(true)
+const chartSeries = computed(() => {
+  return distribucionEmpleados.value.map(
+    depto => depto.cantidad
+  )
+})
+
+const chartOptions = computed(() => ({
+  labels: distribucionEmpleados.value.map(
+    depto => depto.nombre
+  ),
+
+  legend: {
+    position: 'bottom'
+  },
+
+  dataLabels: {
+    enabled: true
+  },
+
+  plotOptions: {
+    pie: {
+      donut: {
+        size: '65%',
+
+        labels: {
+          show: true,
+
+          total: {
+            show: true,
+            label: 'Total',
+
+            formatter: () => empleadosCount.value
+          }
+        }
+      }
+    }
+  },
+
+  colors: distribucionEmpleados.value.map(
+    depto => {
+      const colores = {
+        'Administración': '#2563EB',
+        'Ventas': '#16A34A',
+        'Operaciones': '#EA580C',
+        'TI': '#9333EA',
+        'Recursos Humanos': '#DC2626',
+        'Marketing': '#DB2777',
+        'Finanzas': '#0891B2'
+      }
+
+      return colores[depto.nombre] || '#9CA3AF'
+    }
+  )
+}))
 
 const fechaActual = computed(() => {
   const hoy = new Date()
@@ -356,18 +401,18 @@ const cargarDatos = async () => {
   }
 }
 
-// Función para asignar colores a departamentos
+
 const getColorDepto = (nombreDepto) => {
   const colores = {
-    'Administración': 'blue',
-    'Ventas': 'green',
-    'Operaciones': 'orange',
-    'TI': 'purple',
-    'Recursos Humanos': 'red',
-    'Marketing': 'pink',
-    'Finanzas': 'cyan'
+    'Administración': '#2563EB',
+    'Ventas': '#16A34A',
+    'Operaciones': '#EA580C',
+    'TI': '#9333EA',
+    'Recursos Humanos': '#DC2626',
+    'Marketing': '#DB2777',
+    'Finanzas': '#0891B2'
   }
-  return colores[nombreDepto] || 'grey'
+  return colores[nombreDepto] || '#9CA3AF'
 }
 
 onMounted(cargarDatos)
@@ -376,52 +421,57 @@ onMounted(cargarDatos)
 <style scoped>
 .kpi-card {
   border: none;
-  border-left: 4px solid #1976d2;
   background: white;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
+  overflow: hidden;
 }
 
 .kpi-card:hover {
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
 }
 
-.kpi-blue {
-  border-left-color: #2563eb;
+.kpi-header {
+  height: 4px;
+  width: 100%;
 }
 
-.kpi-teal {
-  border-left-color: #06b6d4;
+.kpi-header-blue {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
 }
 
-.kpi-green {
-  border-left-color: #16a34a;
+.kpi-header-teal {
+  background: linear-gradient(90deg, #06b6d4 0%, #22d3ee 100%);
 }
 
-.kpi-orange {
-  border-left-color: #ea580c;
+.kpi-header-green {
+  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+}
+
+.kpi-header-orange {
+  background: linear-gradient(90deg, #ea580c 0%, #fb923c 100%);
 }
 
 .kpi-number {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 800;
   color: #111827;
   line-height: 1;
 }
 
 .kpi-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   font-weight: 500;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .kpi-change {
-  font-size: 12px;
+  font-size: 11px;
   color: #16a34a;
-  margin-top: 6px;
+  margin-top: 4px;
   font-weight: 600;
 }
 
@@ -429,20 +479,203 @@ onMounted(cargarDatos)
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.75;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.kpi-icon-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+}
+
+.kpi-icon-teal {
+  background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+}
+
+.kpi-icon-green {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
+.kpi-icon-orange {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
 }
 
 .module-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   background: white;
 }
 
 .module-card:hover {
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  transform: translateY(-8px);
+  border-color: #d1d5db;
+}
+
+.chart-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  border: none;
+  height: 100%;
+}
+
+.chart-container {
+  display: flex;
+  justify-content: center;
+}
+
+.h-full {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.h-full .q-card__section) {
+  flex: 1;
+}
+
+.legend-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.legend-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 6px;
+  background-color: #f9fafb;
+  font-size: 12px;
+}
+
+.legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.summary-mini {
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.summary-label-mini {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.summary-value-mini {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.desglose-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.desglose-item:last-child {
+  border-bottom: none;
+}
+
+.summary-box {
+  padding: 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.summary-primary {
+  background: linear-gradient(135deg, #EEF4FF 0%, #E3F2FD 100%);
+  border: 1px solid #BBDEFB;
+}
+
+.summary-secondary {
+  background: linear-gradient(135deg, #F3E5F5 0%, #E8DAEF 100%);
+  border: 1px solid #E1BEE7;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.summary-change {
+  font-size: 12px;
+  color: #16a34a;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.discount-box {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.isss {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
+.afp {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+}
+
+.renta {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+}
+
+.discount-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .rounded-borders {
@@ -464,5 +697,9 @@ onMounted(cargarDatos)
 :deep(.text-h4) {
   font-size: 32px;
   line-height: 1.2;
+}
+
+:deep(.flex-1) {
+  flex: 1;
 }
 </style>
