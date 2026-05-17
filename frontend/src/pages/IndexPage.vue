@@ -1,9 +1,9 @@
 <template>
-  <q-page class="bg-grey-2 q-px-lg q-py-md">
+  <q-page class="q-px-lg q-py-md">
     <!-- Header Welcome -->
     <div class="row items-center q-mb-lg">
       <div class="col">
-        <h1 class="text-h4 text-weight-bold text-grey-9 q-ma-none">¡Bienvenido de vuelta! 👋</h1>
+        <h1 class="text-h4 text-weight-bold text-white q-ma-none">¡Bienvenido de vuelta! 👋</h1>
         <p class="text-subtitle2 text-grey-7 q-mt-sm q-mb-none">Aquí tienes un resumen general de tu sistema de RRHH</p>
       </div>
       <div class="col-auto text-grey-6 text-caption" style="font-weight: 500;">
@@ -88,7 +88,7 @@
 
     <!-- Módulos Principales -->
     <div class="q-mb-md">
-      <h2 class="text-h5 text-weight-bold text-grey-9 q-mb-sm">Módulos principales</h2>
+      <h2 class="text-h5 text-weight-bold text-white q-mb-sm">Módulos principales</h2>
       <p class="text-body2 text-grey-7 q-mb-md">Accede rápidamente a las funciones principales</p>
 
       <div class="row q-col-gutter-sm">
@@ -105,7 +105,7 @@
               color="primary"
               />
             </q-avatar>
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none">Contratación y Personal</h3>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none">Contratación y Personal</h3>
               <p class="text-caption text-grey-7 q-mt-md q-mb-none">Gestiona departamentos, empleados y su información personal.</p>
               <q-btn flat color="primary" label="Acceder" size="sm" icon-right="arrow_forward" class="q-mt-md" />
             </q-card-section>
@@ -118,7 +118,7 @@
               <q-avatar size="56px" style="background: #E3F2FD">
                 <q-icon name="description" size="32px" color="info" />
               </q-avatar>
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mt-md">Gestión de Contratos</h3>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mt-md">Gestión de Contratos</h3>
               <p class="text-caption text-grey-7 q-mt-md q-mb-none">Crea, edita y administra los contratos de tus empleados.</p>
               <q-btn flat color="info" label="Acceder" size="sm" icon-right="arrow_forward" class="q-mt-md" />
             </q-card-section>
@@ -131,7 +131,7 @@
               <q-avatar size="56px" style="background: #E8F5E9">
                 <q-icon name="request_quote" size="32px" color="positive" />
               </q-avatar>
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mt-md">Generación de Planillas</h3>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mt-md">Generación de Planillas</h3>
               <p class="text-caption text-grey-7 q-mt-md q-mb-none">Calcula ISSS, AFP y Renta automáticamente. Genera planillas.</p>
               <q-btn flat color="positive" label="Acceder" size="sm" icon-right="arrow_forward" class="q-mt-md" />
             </q-card-section>
@@ -144,7 +144,7 @@
               <q-avatar size="56px" style="background: #FFF3E0">
                 <q-icon name="history" size="32px" color="warning" />
               </q-avatar>
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mt-md">Historial de Planillas</h3>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mt-md">Historial de Planillas</h3>
               <p class="text-caption text-grey-7 q-mt-md q-mb-none">Consulta y descarga el historial de planillas generadas anteriormente.</p>
               <q-btn flat color="warning" label="Acceder" size="sm" icon-right="arrow_forward" class="q-mt-md" />
             </q-card-section>
@@ -159,7 +159,7 @@
       <div class="col-12 col-lg-6">
         <q-card class="chart-card h-full">
           <q-card-section class="q-pa-md">
-            <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none q-mb-md">Distribución de empleados</h3>
+            <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mb-md">Distribución de empleados</h3>
             
             <div class="chart-container q-mb-md">
               <ApexChart
@@ -188,7 +188,7 @@
         <q-card class="chart-card h-full">
           <q-card-section class="q-pa-md">
             <div class="flex items-center justify-between q-mb-md">
-              <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none">Resumen mensual</h3>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none">Resumen mensual</h3>
               <q-select v-model="mesSeleccionado" :options="meses" outlined dense emit-value map-options style="width: 120px" />
             </div>
 
@@ -233,26 +233,26 @@
 
     <!-- Planillas Recientes -->
     <div class="q-mt-lg">
-      <q-card>
+      <q-card class="bg-dark text-white card-rounded">
         <q-card-section class="q-pa-md">
           <div class="flex items-center justify-between q-mb-md">
-            <h3 class="text-h6 text-weight-bold text-grey-9 q-ma-none">Planillas recientes</h3>
-            <q-btn flat color="primary" label="Ver todas" size="sm" />
+            <h3 class="text-h6 text-weight-bold text-white q-ma-none">Planillas recientes</h3>
+            <q-btn flat class="bg-accent text-white rounded-borders" label="Ver todas" size="sm" />
           </div>
 
-          <q-list separator>
-            <q-item v-for="planilla in planillasRecientes" :key="planilla.id">
+          <q-list separator class="text-white" style="border: none">
+            <q-item v-for="planilla in planillasRecientes" :key="planilla.id" class="q-mb-sm rounded-borders" style="background: rgba(255,255,255,0.05)">
               <q-item-section avatar>
-                <q-icon name="calendar_month" color="primary" />
+                <q-icon name="calendar_month" class="text-accent" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>{{ planilla.mes }}</q-item-label>
-                <q-item-label caption>Generada el {{ planilla.fecha }}</q-item-label>
+                <q-item-label class="text-white">{{ planilla.mes }}</q-item-label>
+                <q-item-label caption class="text-grey-5">Generada el {{ planilla.fecha }}</q-item-label>
               </q-item-section>
               <q-item-section side top>
                 <div class="text-right">
-                  <div class="text-weight-bold">{{ planilla.monto }}</div>
-                  <q-chip :color="planilla.status === 'Completada' ? 'positive' : 'warning'" text-color="white" size="sm">
+                  <div class="text-weight-bold text-white">{{ planilla.monto }}</div>
+                  <q-chip :color="planilla.status === 'Completada' ? 'accent' : 'warning'" :text-color="planilla.status === 'Completada' ? 'white' : 'white'" size="sm">
                     {{ planilla.status }}
                   </q-chip>
                 </div>
@@ -420,17 +420,12 @@ onMounted(cargarDatos)
 
 <style scoped>
 .kpi-card {
-  border: none;
-  background: white;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
   overflow: hidden;
 }
 
 .kpi-card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-  transform: translateY(-6px);
+  transform: translateY(-4px);
 }
 
 .kpi-header {
@@ -457,7 +452,7 @@ onMounted(cargarDatos)
 .kpi-number {
   font-size: 28px;
   font-weight: 800;
-  color: #111827;
+  color: #FFFFFF;
   line-height: 1;
 }
 
@@ -502,23 +497,18 @@ onMounted(cargarDatos)
 
 .module-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  background: white;
 }
 
 .module-card:hover {
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-  transform: translateY(-8px);
-  border-color: #d1d5db;
+  transform: translateY(-4px);
 }
 
 .chart-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  border: none;
   height: 100%;
+}
+
+.card-rounded {
+  border-radius: 20px !important;
 }
 
 .chart-container {
@@ -548,7 +538,7 @@ onMounted(cargarDatos)
   gap: 8px;
   padding: 6px;
   border-radius: 6px;
-  background-color: #f9fafb;
+  background-color: #1F232A;
   font-size: 12px;
 }
 
@@ -580,19 +570,19 @@ onMounted(cargarDatos)
   gap: 10px;
   padding: 8px;
   border-radius: 8px;
-  background-color: #f9fafb;
+  background-color: #1F232A;
 }
 
 .summary-mini {
   padding: 12px;
-  background-color: #f9fafb;
+  background-color: #1F232A;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .summary-label-mini {
   font-size: 11px;
-  color: #6b7280;
+  color: #94A3B8;
   font-weight: 500;
   margin-bottom: 4px;
 }
@@ -600,7 +590,7 @@ onMounted(cargarDatos)
 .summary-value-mini {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: #FFFFFF;
 }
 
 .desglose-item {
@@ -609,7 +599,7 @@ onMounted(cargarDatos)
   align-items: center;
   padding: 8px 0;
   font-size: 13px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .desglose-item:last-child {

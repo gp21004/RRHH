@@ -1,5 +1,5 @@
 <template>
-  <q-page padding class="bg-grey-2">
+  <q-page padding>
     <q-btn flat icon="arrow_back" label="Volver al Inicio" color="primary" class="q-mb-md" to="/" />
     
     <div class="text-h4 text-primary q-mb-md">Gestión de Contratos</div>

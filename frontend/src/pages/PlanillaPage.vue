@@ -1,5 +1,5 @@
 <template>
-  <q-page padding class="bg-grey-2">
+  <q-page padding>
     <div class="no-print">
       <q-btn flat icon="arrow_back" label="Volver" color="primary" class="q-mb-md" to="/" />
       <div class="text-h4 text-primary q-mb-md text-weight-bold">Generación de Planillas</div>

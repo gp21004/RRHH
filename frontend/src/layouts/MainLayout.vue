@@ -101,7 +101,8 @@
         </div>
 
         <!-- Menú Principal -->
-        <q-list separator class="text-white">
+        <!-- Menú Principal -->
+        <q-list separator class="text-white" style="border: none">
           <!-- Sección Pagos -->
           <q-item-label header class="text-uppercase text-weight-bold text-grey">
             Pagos
@@ -112,7 +113,7 @@
             v-ripple
             to="/pagos"
             :active="$route.path === '/pagos'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -128,7 +129,7 @@
             v-ripple
             to="/invoices"
             :active="$route.path === '/invoices'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -144,7 +145,7 @@
             v-ripple
             to="/transacciones"
             :active="$route.path === '/transacciones'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-md"
           >
             <q-item-section avatar>
@@ -165,7 +166,7 @@
             v-ripple
             to="/contratos"
             :active="$route.path === '/contratos'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -181,7 +182,7 @@
             v-ripple
             to="/contratacion"
             :active="$route.path === '/contratacion'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -197,7 +198,7 @@
             v-ripple
             to="/planillas"
             :active="$route.path === '/planillas'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-md"
           >
             <q-item-section avatar>
@@ -218,7 +219,7 @@
             v-ripple
             to="/usuarios"
             :active="$route.path === '/usuarios'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -234,7 +235,7 @@
             v-ripple
             to="/historial"
             :active="$route.path === '/historial'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders q-mb-sm"
           >
             <q-item-section avatar>
@@ -250,7 +251,7 @@
             v-ripple
             to="/configuracion"
             :active="$route.path === '/configuracion'"
-            active-class="bg-primary text-white"
+            active-class="menu-active"
             class="rounded-borders"
           >
             <q-item-section avatar>
@@ -273,7 +274,7 @@
 
     <!-- PÁGINA PRINCIPAL -->
     <q-page-container>
-      <div class="bg-grey-2 min-h-screen">
+      <div class="min-h-screen q-pa-md" style="background-color: transparent">
         <router-view />
       </div>
     </q-page-container>
@@ -292,23 +293,28 @@ const toggleDrawer = () => {
 
 <style scoped>
 :deep(.bg-dark) {
-  background-color: #000000;
+  background-color: #2C313C !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  border-right: 1px solid rgba(255,255,255,0.05);
 }
 
 :deep(.text-grey) {
-  color: #888;
+  color: #94A3B8 !important;
 }
 
 :deep(.text-grey-7) {
-  color: #999;
+  color: #64748B !important;
 }
 
 :deep(.rounded-borders) {
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
-:deep(.bg-grey-2) {
-  background-color: #f5f5f5;
+.menu-active {
+  background: rgba(74, 161, 255, 0.15) !important;
+  box-shadow: inset 2px 0 0 #4AA1FF, 0 0 12px rgba(74, 161, 255, 0.1);
+  color: #4AA1FF !important;
+  font-weight: bold;
 }
 
 :deep(.min-h-screen) {
@@ -339,5 +345,11 @@ const toggleDrawer = () => {
 
 :deep(.items-center) {
   align-items: center;
+}
+
+/* Ocultar el separador de la lista del menú lateral */
+.q-list--separator > .q-item-type + .q-item-type,
+.q-list--separator > .q-virtual-scroll__content > .q-item-type + .q-item-type {
+  border-top: none;
 }
 </style>
