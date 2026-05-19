@@ -29,7 +29,8 @@ model Empleado {
   salarioBase    Decimal           @db.Decimal(10, 2)
   fechaIngreso   DateTime          @default(now())
   estado         Boolean           @default(true) // Activo o Inactivo
-  
+  correo         String?
+  telefono       String?
   departamentoId Int
   departamento   Departamento      @relation(fields: [departamentoId], references: [id])
   

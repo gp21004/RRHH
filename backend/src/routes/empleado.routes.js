@@ -1,10 +1,27 @@
-// archivo: backend/src/routes/empleado.routes.js
-const express = require('express');
-const router = express.Router();
-const { crearEmpleado, obtenerEmpleados } = require('../controllers/empleado.controller.js');
+const express = require('express')
+const router = express.Router()
 
-// Rutas: /api/empleados
-router.post('/', crearEmpleado);
-router.get('/', obtenerEmpleados);
+const {
+  crearEmpleado,
+  obtenerEmpleados,
+  obtenerEmpleadoPorId,
+  actualizarEmpleado,
+  eliminarEmpleado
+} = require('../controllers/empleado.controller.js')
 
-module.exports = router;
+// Crear
+router.post('/', crearEmpleado)
+
+// Obtener todos
+router.get('/', obtenerEmpleados)
+
+// Obtener por ID
+router.get('/:id', obtenerEmpleadoPorId)
+
+// Actualizar
+router.put('/:id', actualizarEmpleado)
+
+// Eliminar
+router.delete('/:id', eliminarEmpleado)
+
+module.exports = router
