@@ -1,14 +1,25 @@
 const routes = [
+  // Ruta de Login (sin layout principal)
+  {
+    path: '/login',
+    component: () => import('pages/LoginPage.vue'),
+    meta: { public: true }
+  },
+
+  // Rutas protegidas (con layout principal)
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
+    meta: { requiresAuth: true },
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') }, // El Dashboard
       { path: 'contratacion', component: () => import('pages/ContratacionPage.vue') }, // Módulo 1
       { path: 'planillas', component: () => import('pages/PlanillaPage.vue') }, // Módulo 2
       { path: 'historial', component: () => import('pages/HistorialPage.vue') }, // Módulo 3
       { path: 'contratos', component: () => import('pages/ContratosPage.vue') }, // Módulo 4
-      { path: '/empleado/:id', name: 'detalle-empleado', component: () => import('components/DetalleEmpleado.vue') } // Módulo 5
+      { path: '/empleado/:id', name: 'detalle-empleado', component: () => import('components/DetalleEmpleado.vue') }, // Módulo 5
+      { path: 'perfil', component: () => import('pages/PerfilPage.vue') }, // Perfil de usuario
+      { path: 'configuracion', component: () => import('pages/ConfiguracionPage.vue') } // Configuración
     ]
   },
 

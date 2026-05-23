@@ -43,10 +43,17 @@
 
           <!-- Perfil Usuario -->
           <q-btn flat dense round>
-            <q-avatar size="40px" color="primary" text-color="white" icon="person" />
+            <q-avatar size="40px" color="primary" text-color="white">
+              <span style="font-size: 14px; font-weight: 600;">{{ userInitials }}</span>
+            </q-avatar>
             <q-menu anchor="bottom right" self="top right">
-              <q-list style="min-width: 200px">
-                <q-item-label header>John Doe</q-item-label>
+              <q-list style="min-width: 220px">
+                <q-item>
+                  <q-item-section>
+                    <q-item-label class="text-weight-bold">{{ userName }}</q-item-label>
+                    <q-item-label caption>{{ rolLabel }}</q-item-label>
+                  </q-item-section>
+                </q-item>
                 <q-separator />
                 <q-item clickable v-ripple to="/perfil">
                   <q-item-section avatar>
@@ -61,11 +68,11 @@
                   <q-item-section>Configuración</q-item-section>
                 </q-item>
                 <q-separator />
-                <q-item clickable v-ripple>
+                <q-item clickable v-ripple @click="handleLogout">
                   <q-item-section avatar>
-                    <q-icon name="logout" />
+                    <q-icon name="logout" color="red-4" />
                   </q-item-section>
-                  <q-item-section>Cerrar Sesión</q-item-section>
+                  <q-item-section class="text-red-4">Cerrar Sesión</q-item-section>
                 </q-item>
               </q-list>
             </q-menu>
@@ -209,58 +216,62 @@
             </q-item-section>
           </q-item>
 
-          <!-- Sección Usuarios -->
-          <q-item-label header class="text-uppercase text-weight-bold text-grey">
-            Administración
-          </q-item-label>
+          <!-- Sección Usuarios (solo admin) -->
+          <template v-if="userRole === 'admin' || userRole === 'supervisor'">
+            <q-item-label header class="text-uppercase text-weight-bold text-grey">
+              Administración
+            </q-item-label>
 
-          <q-item
-            clickable
-            v-ripple
-            to="/usuarios"
-            :active="$route.path === '/usuarios'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="people" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Usuarios</q-item-label>
-            </q-item-section>
-          </q-item>
+            <q-item
+              v-if="userRole === 'admin'"
+              clickable
+              v-ripple
+              to="/usuarios"
+              :active="$route.path === '/usuarios'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-sm"
+            >
+              <q-item-section avatar>
+                <q-icon name="people" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Usuarios</q-item-label>
+              </q-item-section>
+            </q-item>
 
-          <q-item
-            clickable
-            v-ripple
-            to="/historial"
-            :active="$route.path === '/historial'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="analytics" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Reportes</q-item-label>
-            </q-item-section>
-          </q-item>
+            <q-item
+              clickable
+              v-ripple
+              to="/historial"
+              :active="$route.path === '/historial'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-sm"
+            >
+              <q-item-section avatar>
+                <q-icon name="analytics" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Reportes</q-item-label>
+              </q-item-section>
+            </q-item>
 
-          <q-item
-            clickable
-            v-ripple
-            to="/configuracion"
-            :active="$route.path === '/configuracion'"
-            active-class="menu-active"
-            class="rounded-borders"
-          >
-            <q-item-section avatar>
-              <q-icon name="settings" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Configuración</q-item-label>
-            </q-item-section>
-          </q-item>
+            <q-item
+              v-if="userRole === 'admin'"
+              clickable
+              v-ripple
+              to="/configuracion"
+              :active="$route.path === '/configuracion'"
+              active-class="menu-active"
+              class="rounded-borders"
+            >
+              <q-item-section avatar>
+                <q-icon name="settings" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Configuración</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
         </q-list>
       </q-scroll-area>
 
@@ -282,12 +293,38 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useAuth } from 'src/stores/auth'
+
+const router = useRouter()
+const $q = useQuasar()
+const { state, userName, userRole, userInitials, logout } = useAuth()
 
 const showDrawer = ref(true)
 
 const toggleDrawer = () => {
   showDrawer.value = !showDrawer.value
+}
+
+const rolLabel = computed(() => {
+  const roles = { admin: 'Administrador', supervisor: 'Supervisor', empleado: 'Empleado' }
+  return roles[state.user?.rol] || state.user?.rol || 'Usuario'
+})
+
+function handleLogout() {
+  $q.dialog({
+    title: 'Cerrar Sesión',
+    message: '¿Estás seguro que deseas cerrar sesión?',
+    cancel: { label: 'Cancelar', flat: true, color: 'grey' },
+    ok: { label: 'Cerrar Sesión', color: 'red', unelevated: true },
+    persistent: true,
+    dark: true
+  }).onOk(() => {
+    logout()
+    router.push('/login')
+  })
 }
 </script>
 

@@ -1,5 +1,6 @@
 // archivo: backend/prisma/seed.js
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
@@ -10,6 +11,35 @@ async function main() {
     await prisma.planilla.deleteMany();
     await prisma.empleado.deleteMany();
     await prisma.departamento.deleteMany();
+    await prisma.usuario.deleteMany();
+
+    // 0. Crear Usuario Administrador por defecto
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash('admin123', salt);
+    
+    await prisma.usuario.create({
+        data: {
+            username: 'admin',
+            password: passwordHash,
+            nombreCompleto: 'Administrador del Sistema',
+            correo: 'admin@gestionpro.com',
+            rol: 'admin'
+        }
+    });
+
+    // Crear usuario supervisor de prueba
+    const passwordHashSup = await bcrypt.hash('super123', salt);
+    await prisma.usuario.create({
+        data: {
+            username: 'supervisor',
+            password: passwordHashSup,
+            nombreCompleto: 'Supervisor General',
+            correo: 'supervisor@gestionpro.com',
+            rol: 'supervisor'
+        }
+    });
+
+    console.log('👤 Usuarios creados: admin/admin123 y supervisor/super123');
 
     // 1. Crear Departamentos
     const deptoAdmin = await prisma.departamento.create({
