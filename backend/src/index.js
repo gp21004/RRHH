@@ -8,6 +8,7 @@ const departamentoRoutes = require('./routes/departamento.routes.js');
 const empleadoRoutes = require('./routes/empleado.routes.js');
 const planillaRoutes = require('./routes/planilla.routes.js');
 const authRoutes = require('./routes/auth.routes.js');
+const contratoRoutes = require('./routes/contrato.routes.js');
 const app = express();
 
 app.use(cors());
@@ -18,6 +19,7 @@ app.use('/api/departamentos', departamentoRoutes);
 app.use('/api/empleados', empleadoRoutes);
 app.use('/api/planillas', planillaRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/contratos', contratoRoutes);
 app.get('/', (req, res) => {
     res.json({ mensaje: '¡El servidor del Sistema de Planillas SV está funcionando!' });
 });

@@ -35,6 +35,7 @@ model Empleado {
   departamento   Departamento      @relation(fields: [departamentoId], references: [id])
   
   planillas      DetallePlanilla[]
+  contratos      Contrato[]
 }
 
 // --- TABLAS DE PLANILLA (Ajustadas para el controlador) ---
@@ -78,4 +79,23 @@ model Usuario {
   activo          Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+model Contrato {
+  id                 Int      @id @default(autoincrement())
+  empleadoId         Int
+  tipoContrato       String
+  cargo              String
+  fechaInicio        DateTime @db.Date
+  fechaFin           DateTime? @db.Date
+  salarioContratado  Decimal  @db.Decimal(10, 2)
+  jornada            String
+  horario            String
+  diasLaborales      String
+  periodoPrueba      String
+  clausulas          String?
+  estado             String   @default("Vigente") // Vigente, Finalizado, Suspendido
+
+  // Relación con Empleado (un empleado puede tener muchos contratos a lo largo del tiempo)
+  empleado           Empleado @relation(fields: [empleadoId], references: [id])
+ 
 }
