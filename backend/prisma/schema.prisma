@@ -26,8 +26,8 @@ model Empleado {
   dui            String            @unique // Formato: 00000000-0
   nit            String?           @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
   nup_afp        String?           @unique // Número Único Previsional
-  salarioBase    Decimal           @db.Decimal(10, 2)
   fechaIngreso   DateTime          @default(now())
+  fechaNacimiento DateTime         @db.Date
   estado         Boolean           @default(true) // Activo o Inactivo
   correo         String?
   telefono       String?
@@ -57,7 +57,7 @@ model DetallePlanilla {
   
   // La "Foto" financiera del mes (Lo que el controlador envía)
   empleadoNombre String   // Guardamos el nombre completo como texto para el historial
-  salarioBase    Decimal  @db.Decimal(10, 2)
+  salarioContratado  Decimal  @db.Decimal(10, 2)
   isss           Decimal  @db.Decimal(10, 2)
   afp            Decimal  @db.Decimal(10, 2)
   renta          Decimal  @db.Decimal(10, 2)

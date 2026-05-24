@@ -138,23 +138,13 @@
           <!-- FILA 3 -->
           <div class="row q-col-gutter-lg q-mb-lg">
 
-            <div class="col-12 col-sm-4">
-              <q-input
-                outlined
-                v-model.number="empleado.salarioBase"
-                label="Salario Base ($) *"
-                type="number"
-                step="0.01"
-                required
-                class="form-input"
-              />
-            </div>
+
 
             <div class="col-12 col-sm-4">
               <q-select
                 outlined
                 v-model="empleado.departamentoId"
-                :options="opcionesDepartamentos"
+                :options="opcionesDepartamentos || []"
                 option-label="nombre"
                 option-value="id"
                 emit-value
@@ -226,7 +216,18 @@
               />
             </div>
 
-            <div class="col">
+            <q-space />
+
+            <div class="col-auto" v-if="!editando">
+              <q-btn
+                label="Registrar e ir a Contratos"
+                color="info"
+                icon="description"
+                @click="registrarYIrAContratos"
+              />
+            </div>
+
+            <div class="col-auto">
               <q-btn
                 :label="
                   editando
@@ -235,7 +236,6 @@
                 "
                 type="submit"
                 color="primary"
-                class="full-width"
                 size="md"
               />
             </div>
@@ -279,7 +279,7 @@
               outlined
               dense
               v-model="filtros.departamento"
-              :options="opcionesDepartamentos"
+              :options="opcionesDepartamentos || []"
               option-label="nombre"
               option-value="id"
               emit-value
@@ -528,19 +528,19 @@ const $q = useQuasar()
 
 const editando = ref(false)
 
-const empleadoInicial = {
-  nombres: '',
-  apellidos: '',
-  dui: '',
-  nit: '',
-  nup_afp: '',
-  fechaNacimiento: '',
-  salarioBase: null,
-  departamentoId: null,
-  telefono: '',
-  correo: '',
-  activo: true
-}
+  const empleadoInicial = {
+    id: null,
+    nombres: '',
+    apellidos: '',
+    dui: '',
+    nit: '',
+    nup_afp: '',
+    fechaNacimiento: '',
+    departamentoId: null,
+    telefono: '',
+    correo: '',
+    activo: true
+  }
 
 const depto = ref({
   nombre: '',
@@ -579,6 +579,7 @@ const empleadosFiltrados = computed(() => {
 
     const coincideDepto =
       !filtros.value.departamento ||
+      emp.departamento?.id === filtros.value.departamento ||
       emp.departamentoId === filtros.value.departamento
 
     const coincideEstado =
@@ -615,14 +616,7 @@ const columnasEmpleados = [
         : 'Sin Depto',
     align: 'center'
   },
-  {
-    name: 'salarioBase',
-    label: 'Salario Base',
-    field: 'salarioBase',
-    align: 'right',
-    format: val => `$${parseFloat(val).toFixed(2)}`,
-    sortable: true
-  },
+
   {
     name: 'activo',
     label: 'Estado',
@@ -753,14 +747,19 @@ const limpiarFormulario = () => {
   empleado.value = { ...empleadoInicial }
 }
 
-const guardarEmpleado = async () => {
+const crearEmpleadoAPI = async (datosEmpleado) => {
   try {
-
     const datosEnvio = {
-      ...empleado.value,
-      salarioBase: parseFloat(
-        empleado.value.salarioBase
-      )
+      nombres: datosEmpleado.nombres,
+      apellidos: datosEmpleado.apellidos,
+      dui: datosEmpleado.dui,
+      nit: datosEmpleado.nit,
+      nup_afp: datosEmpleado.nup_afp,
+      fechaNacimiento: datosEmpleado.fechaNacimiento || null,
+      departamentoId: datosEmpleado.departamentoId,
+      telefono: datosEmpleado.telefono,
+      correo: datosEmpleado.correo,
+      activo: datosEmpleado.activo
     }
 
     const res = await fetch(
@@ -776,35 +775,43 @@ const guardarEmpleado = async () => {
 
     const data = await res.json()
 
-    if (res.ok) {
-
-      $q.notify({
-        type: 'positive',
-        message: '¡Empleado registrado!',
-        position: 'top'
-      })
-
-      limpiarFormulario()
-
-      await cargarEmpleados()
-
-    } else {
-
-      $q.notify({
-        type: 'warning',
-        message: data.error
-      })
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al registrar empleado')
     }
 
+    return data
   } catch (error) {
-    console.error(error)
+    console.error('[v0] Error en crearEmpleadoAPI:', error)
+    throw error
+  }
+}
+
+const guardarEmpleado = async () => {
+  try {
+    await crearEmpleadoAPI(empleado.value)
+
+    $q.notify({
+      type: 'positive',
+      message: '¡Empleado registrado!',
+      position: 'top'
+    })
+
+    limpiarFormulario()
+    await cargarEmpleados()
+
+  } catch (error) {
+    console.error('[v0] Error en guardarEmpleado:', error)
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Error al registrar empleado'
+    })
   }
 }
 
 const editarEmpleado = (emp) => {
 
   console.log('[v0] Editando empleado:', emp)
-  console.log(emp)
+
   empleado.value = {
     id: emp.id,
     nombres: emp.nombres || '',
@@ -813,14 +820,13 @@ const editarEmpleado = (emp) => {
     nit: emp.nit || '',
     nup_afp: emp.nup_afp || '',
     fechaNacimiento: emp.fechaNacimiento || '',
-    salarioBase: emp.salarioBase || null,
     departamentoId: emp.departamentoId || null,
     telefono: emp.telefono || '',
     correo: emp.correo || '',
-    estado: emp.activo ?? true
+    activo: emp.activo ?? true
   }
 
-  console.log('[v0] Datos del formulario:', empleado.value)
+  console.log('[v0] Datos del formulario cargados')
 
   editando.value = true
 
@@ -832,15 +838,21 @@ const editarEmpleado = (emp) => {
 
 const actualizarEmpleado = async () => {
   try {
-
     const datosEnvio = {
-      ...empleado.value,
-      salarioBase: parseFloat(
-        empleado.value.salarioBase
-      )
+      nombres: empleado.value.nombres,
+      apellidos: empleado.value.apellidos,
+      dui: empleado.value.dui,
+      nit: empleado.value.nit,
+      nup_afp: empleado.value.nup_afp,
+      fechaNacimiento: empleado.value.fechaNacimiento || null,
+      departamentoId: empleado.value.departamentoId,
+      telefono: empleado.value.telefono,
+      correo: empleado.value.correo,
+      activo: empleado.value.activo
     }
 
-    console.log('[v0] Enviando datos al servidor:', datosEnvio)
+    console.log('[v0] Actualizando empleado con ID:', empleado.value.id)
+    console.log('[v0] Datos enviados:', datosEnvio)
 
     const res = await fetch(
       `http://localhost:3000/api/empleados/${empleado.value.id}`,
@@ -853,35 +865,62 @@ const actualizarEmpleado = async () => {
       }
     )
 
-    console.log('[v0] Respuesta del servidor:', res.status)
+    const data = await res.json()
 
     if (res.ok) {
-
       $q.notify({
         type: 'positive',
         message: 'Empleado actualizado correctamente'
       })
 
       cancelarEdicion()
-
       await cargarEmpleados()
     } else {
-      const errorData = await res.text()
-      console.error('[v0] Error en respuesta:', errorData)
+      console.error('[v0] Error en respuesta:', data)
       $q.notify({
         type: 'negative',
-        message: 'Error al actualizar empleado'
+        message: data.error || 'Error al actualizar empleado'
       })
     }
 
   } catch (error) {
-    console.error('[v0] Error actualizando:', error)
+    console.error('[v0] Error en actualizarEmpleado:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al actualizar empleado'
+    })
   }
 }
 
 const cancelarEdicion = () => {
   empleado.value = { ...empleadoInicial }
   editando.value = false
+}
+
+const registrarYIrAContratos = async () => {
+  try {
+    const data = await crearEmpleadoAPI(empleado.value)
+
+    $q.notify({
+      type: 'positive',
+      message: '¡Empleado registrado! Redirigiendo a contratos...',
+      position: 'top'
+    })
+
+    // Guardar el empleado registrado para pre-cargar en contratos
+    sessionStorage.setItem('empleadoRecienRegistrado', JSON.stringify(data))
+
+    // Redirigir a gestión de contratos
+    router.push('/contratos')
+
+  } catch (error) {
+    console.error('[v0] Error en registrarYIrAContratos:', error)
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Error al registrar el empleado',
+      position: 'top'
+    })
+  }
 }
 
 const eliminarEmpleado = (id) => {
@@ -902,18 +941,28 @@ const eliminarEmpleado = (id) => {
         }
       )
 
-      if (res.ok) {
+      const data = await res.json()
 
+      if (res.ok) {
         $q.notify({
           type: 'positive',
-          message: 'Empleado eliminado'
+          message: data.mensaje || 'Empleado eliminado correctamente'
         })
 
         await cargarEmpleados()
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: data.error || 'No se pudo eliminar el empleado'
+        })
       }
 
     } catch (error) {
-      console.error(error)
+      console.error('[v0] Error eliminando empleado:', error)
+      $q.notify({
+        type: 'negative',
+        message: 'Error al eliminar el empleado'
+      })
     }
 
   })

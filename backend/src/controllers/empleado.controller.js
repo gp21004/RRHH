@@ -7,13 +7,56 @@ const prisma = new PrismaClient()
 // =========================
 const crearEmpleado = async (req, res) => {
   try {
+
+    const {
+      nombres,
+      apellidos,
+      dui,
+      nit,
+      nup_afp,
+      fechaNacimiento,
+      departamentoId,
+      telefono,
+      correo,
+      estado
+    } = req.body
+
     const nuevoEmpleado = await prisma.empleado.create({
-      data: req.body
+      data: {
+        nombres,
+        apellidos,
+
+        dui,
+        nit: nit || null,
+        nup_afp: nup_afp || null,
+
+        fechaNacimiento: fechaNacimiento
+          ? new Date(fechaNacimiento + 'T00:00:00')
+          : null,
+
+        telefono: telefono || null,
+        correo: correo || null,
+
+        estado: estado === false ? false : true,
+
+        departamento: {
+          connect: {
+            id: Number(departamentoId)
+          }
+        }
+      }
     })
 
     res.json(nuevoEmpleado)
+
   } catch (error) {
     console.error(error)
+
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        error: 'DUI, NIT o NUP ya existe'
+      })
+    }
 
     res.status(500).json({
       error: 'Error al crear empleado'
@@ -79,6 +122,7 @@ const obtenerEmpleadoPorId = async (req, res) => {
 // =========================
 const actualizarEmpleado = async (req, res) => {
   try {
+
     const id = Number(req.params.id)
 
     const {
@@ -87,8 +131,8 @@ const actualizarEmpleado = async (req, res) => {
       dui,
       nit,
       nup_afp,
-      salarioBase,
       departamentoId,
+      fechaNacimiento,
       telefono,
       correo,
       estado
@@ -102,22 +146,23 @@ const actualizarEmpleado = async (req, res) => {
       data: {
         nombres,
         apellidos,
-        dui: dui || null,
+
+        dui,
         nit: nit || null,
         nup_afp: nup_afp || null,
 
-        salarioBase: Number(salarioBase),
+        fechaNacimiento: fechaNacimiento
+          ? new Date(fechaNacimiento)
+          : null,
 
-        telefono,
-        correo,
+        telefono: telefono || null,
+        correo: correo || null,
 
-        estado: estado,
+        estado: estado ?? true,
 
-        departamento: {
-          connect: {
-            id: Number(departamentoId)
-          }
-        }
+        departamento: departamentoId
+          ? { connect: { id: Number(departamentoId) } }
+          : undefined
       }
     })
 
@@ -138,19 +183,45 @@ const eliminarEmpleado = async (req, res) => {
   try {
     const id = Number(req.params.id)
 
-    await prisma.empleado.delete({
+    // 1. Buscar contratos activos del empleado
+    const contratoActivo = await prisma.contrato.findFirst({
       where: {
-        id: id
+        empleadoId: id,
+        estado: 'Activo' // importante según tu schema
       }
     })
 
-    res.json({
+    // 2. Bloquear eliminación si tiene contrato activo
+    if (contratoActivo) {
+      return res.status(400).json({
+        error: 'No se puede eliminar el empleado porque tiene un contrato activo'
+      })
+    }
+
+    // 3. (Opcional pero recomendado) verificar si existen contratos históricos
+    const contratos = await prisma.contrato.findMany({
+      where: { empleadoId: id }
+    })
+
+    if (contratos.length > 0) {
+      return res.status(400).json({
+        error: 'No se puede eliminar el empleado porque tiene historial de contratos'
+      })
+    }
+
+    // 4. Eliminar empleado (YA SEGURO)
+    await prisma.empleado.delete({
+      where: { id }
+    })
+
+    return res.json({
       mensaje: 'Empleado eliminado correctamente'
     })
+
   } catch (error) {
     console.error(error)
 
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Error al eliminar empleado'
     })
   }

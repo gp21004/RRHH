@@ -129,10 +129,6 @@
               <span>{{ empleado.cargo || 'No asignado' }}</span>
             </div>
 
-            <div class="info-item">
-              <span class="label">Salario:</span>
-              <span>${{ formatSalario(empleado.salarioBase) }}</span>
-            </div>
 
             <div class="info-item">
               <span class="label">Estado:</span>
@@ -217,11 +213,6 @@ const getAvatarColor = (id) => {
   return colors[Math.abs(id || 0) % colors.length]
 }
 
-const formatSalario = (valor) => {
-  if (!valor) return '0.00'
-
-  return parseFloat(valor).toFixed(2)
-}
 
 onMounted(() => {
   cargarEmpleado()

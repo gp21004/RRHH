@@ -1,95 +1,158 @@
-const { PrismaClient } = require('@prisma/client')
+  const { PrismaClient } = require('@prisma/client')
 
-const prisma = new PrismaClient()
+  const prisma = new PrismaClient()
 
-// OBTENER CONTRATOS
-const obtenerContratos = async (req, res) => {
+  // OBTENER CONTRATOS
+  const obtenerContratos = async (req, res) => {
 
-  try {
+    try {
 
-    const contratos = await prisma.contrato.findMany({
-      include: {
-        empleado: true
-      },
-      orderBy: {
-        id: 'desc'
-      }
-    })
+      const contratos = await prisma.contrato.findMany({
+        include: {
+          empleado: true
+        },
+        orderBy: {
+          id: 'desc'
+        }
+      })
 
-    const data = contratos.map(c => ({
-      id: c.id,
-      empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
-      tipoContrato: c.tipoContrato,
-      fechaInicio: c.fechaInicio,
-      fechaFin: c.fechaFin || '-',
-      salarioContratado: c.salarioContratado,
-      estado: c.estado,
-      cargo: c.cargo,
-      firma: 'PDF'
-    }))
+      const data = contratos.map(c => ({
+        id: c.id,
+        empleadoId: c.empleadoId,
+        empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
+        tipoContrato: c.tipoContrato,
+        fechaInicio: c.fechaInicio,
+        fechaFin: c.fechaFin || '',
+        salarioContratado: c.salarioContratado,
+        estado: c.estado,
+        cargo: c.cargo,
+        jornada: c.jornada,
+        horario: c.horario,
+        diasLaborales: c.diasLaborales,
+        periodoPrueba: c.periodoPrueba,
+        clausulas: c.clausulas,
+        firma: 'PDF'
+      }))
 
-    res.json(data)
+      res.json(data)
 
-  } catch (error) {
+    } catch (error) {
 
-    console.error(error)
+      console.error(error)
 
-    res.status(500).json({
-      error: error.message
-    })
+      res.status(500).json({
+        error: error.message
+      })
+    }
   }
-}
 
 
-// CREAR CONTRATO
-const crearContrato = async (req, res) => {
+  // CREAR CONTRATO
+  const crearContrato = async (req, res) => {
 
-  try {
+    try {
 
-    const {
-      empleadoId,
-      tipoContrato,
-      cargo,
-      fechaInicio,
-      fechaFin,
-      salarioContratado,
-      jornada,
-      horario,
-      diasLaborales,
-      periodoPrueba,
-      clausulas
-    } = req.body
-
-    const contrato = await prisma.contrato.create({
-      data: {
+      const {
         empleadoId,
         tipoContrato,
         cargo,
-        fechaInicio: new Date(fechaInicio),
-        fechaFin: fechaFin ? new Date(fechaFin) : null,
+        fechaInicio,
+        fechaFin,
         salarioContratado,
         jornada,
         horario,
         diasLaborales,
         periodoPrueba,
-        clausulas,
-        estado: 'Activo'
-      }
-    })
+        clausulas
+      } = req.body
 
-    res.status(201).json(contrato)
+      const contrato = await prisma.contrato.create({
+        data: {
+          empleadoId,
+          tipoContrato,
+          cargo,
+          fechaInicio: new Date(fechaInicio),
+          fechaFin: fechaFin ? new Date(fechaFin) : null,
+          salarioContratado,
+          jornada,
+          horario,
+          diasLaborales,
+          periodoPrueba,
+          clausulas,
+          estado: 'Activo'
+        }
+      })
 
-  } catch (error) {
+      res.status(201).json(contrato)
 
-    console.error(error)
+    } catch (error) {
 
-    res.status(500).json({
-      error: error.message
-    })
+      console.error(error)
+
+      res.status(500).json({
+        error: error.message
+      })
+    }
   }
-}
 
-module.exports = {
-  obtenerContratos,
-  crearContrato
-}
+  // ACTUALIZAR CONTRATO
+  const actualizarContrato = async (req, res) => {
+
+    try {
+
+      const { id } = req.params
+      const { estado } = req.body
+
+      const contrato = await prisma.contrato.update({
+        where: { id: Number(id) },
+        data: { estado }
+      })
+
+      res.json(contrato)
+
+    } catch (error) {
+
+      console.error(error)
+
+      res.status(500).json({
+        error: error.message
+      })
+    }
+  }
+
+  // OBTENER UN CONTRATO POR ID
+  const obtenerContratoPorId = async (req, res) => {
+
+    try {
+
+      const { id } = req.params
+
+      const contrato = await prisma.contrato.findUnique({
+        where: { id: Number(id) },
+        include: {
+          empleado: true
+        }
+      })
+
+      if (!contrato) {
+        return res.status(404).json({ error: 'Contrato no encontrado' })
+      }
+
+      res.json(contrato)
+
+    } catch (error) {
+
+      console.error(error)
+
+      res.status(500).json({
+        error: error.message
+      })
+    }
+  }
+
+  module.exports = {
+    obtenerContratos,
+    crearContrato,
+    actualizarContrato,
+    obtenerContratoPorId
+  }

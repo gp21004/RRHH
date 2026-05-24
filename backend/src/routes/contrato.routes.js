@@ -4,11 +4,18 @@ const router = express.Router()
 
 const {
   obtenerContratos,
-  crearContrato
+  crearContrato,
+  actualizarContrato,
+  obtenerContratoPorId
 } = require('../controllers/contrato.controller')
 
 router.get('/', obtenerContratos)
 
+router.get('/:id', obtenerContratoPorId)
+
 router.post('/', crearContrato)
+
+router.patch('/:id', actualizarContrato)
+
 
 module.exports = router

@@ -137,7 +137,15 @@
                   <q-input outlined dense v-model="formulario.fechaInicio" type="date" label="Fecha de Inicio *" required />
                 </div>
                 <div class="col-12 col-md-6">
-                  <q-input outlined dense v-model="formulario.fechaFin" type="date" label="Fecha de Fin" />
+                  <q-input 
+                    outlined 
+                    dense 
+                    v-model="formulario.fechaFin" 
+                    type="date" 
+                    label="Fecha de Fin"
+                    :disable="formulario.tipoContrato === 'Por tiempo indefinido'"
+                    hint="No aplica para contratos indefinidos"
+                  />
                 </div>
                 <div class="col-12 col-md-6">
                   <q-input outlined dense v-model.number="formulario.salarioContratado" type="number" label="Salario Mensual ($) *" step="0.01" required />
@@ -313,6 +321,13 @@
           </q-td>
         </template>
 
+        <!-- Columna Fecha Fin -->
+        <template #body-cell-fechaFin="props">
+          <q-td :props="props">
+            <span style="color: #e5e7eb;">{{ props.row.fechaFin || 'Indefinido' }}</span>
+          </q-td>
+        </template>
+
         <!-- Columna Salario -->
         <template #body-cell-salarioContratado="props">
           <q-td :props="props">
@@ -324,9 +339,33 @@
         <template #body-cell-acciones="props">
           <q-td :props="props" class="acciones-cell">
             <div class="flex items-center justify-center" style="gap: 4px;">
-              <q-btn flat dense round icon="visibility" size="sm" color="primary" />
-              <q-btn flat dense round icon="edit" size="sm" color="warning" />
-              <q-btn flat dense round icon="delete" size="sm" color="negative" />
+              <q-btn 
+                flat 
+                dense 
+                round 
+                icon="visibility" 
+                size="sm" 
+                color="primary"
+                @click="verContrato(props.row)"
+              />
+              <q-btn 
+                flat 
+                dense 
+                round 
+                icon="edit" 
+                size="sm" 
+                color="warning"
+                @click="editarContrato(props.row)"
+              />
+              <q-btn 
+                flat 
+                dense 
+                round 
+                icon="person_off" 
+                size="sm" 
+                color="negative"
+                @click="cambiarEstadoContrato(props.row)"
+              />
             </div>
           </q-td>
         </template>
@@ -336,9 +375,14 @@
 </template>
 
 <script setup name="ContratosPage">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
+
 const $q = useQuasar()
+const router = useRouter()
+
+
 // Estado del formulario
 const formulario = ref({
   empleado: '',
@@ -570,10 +614,134 @@ const guardarContrato = async () => {
   }
 }
 
-onMounted(() => {
-  cargarEmpleados()
-  cargarContratos()
+const verContrato = (contrato) => {
+  router.push({
+    name: 'contrato-detalle',
+    params: { id: contrato.id }
+  })
+}
+
+const editarContrato = (contrato) => {
+  empleadoSeleccionado.value = listaEmpleados.value.find(e => e.id === contrato.empleadoId)
+  formulario.value = {
+    empleado: empleadoSeleccionado.value?.nombres || '',
+    departamento: empleadoSeleccionado.value?.departamento?.nombre || '',
+    cargo: contrato.cargo || '',
+    dui: empleadoSeleccionado.value?.dui || '',
+    tipoContrato: contrato.tipoContrato,
+    fechaInicio: contrato.fechaInicio,
+    fechaFin: contrato.fechaFin || '',
+    salarioContratado: contrato.salarioContratado,
+    jornada: contrato.jornada,
+    horaInicio: contrato.horaInicio || '',
+    horaFin: contrato.horaFin || '',
+    diasLaborales: contrato.diasLaborales ? contrato.diasLaborales.split(', ') : [],
+    periodoPrueba: contrato.periodoPrueba,
+    clausulas: contrato.clausulas
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const cambiarEstadoContrato = (contrato) => {
+  $q.dialog({
+    title: 'Cambiar Estado del Contrato',
+    message: `¿Qué deseas hacer con el contrato de ${contrato.empleado}?`,
+    options: {
+      type: 'radio',
+      model: contrato.estado,
+      items: [
+        { label: 'Finalizado', value: 'Finalizado' },
+        { label: 'Despedido', value: 'Despedido' },
+        { label: 'Renuncia', value: 'Renuncia' },
+        { label: 'Suspendido', value: 'Suspendido' }
+      ]
+    },
+    cancel: true,
+    persistent: true
+  }).onOk(async (nuevoEstado) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/contratos/${contrato.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: nuevoEstado })
+      })
+
+      if (res.ok) {
+        $q.notify({
+          type: 'positive',
+          message: `Estado actualizado a ${nuevoEstado}`,
+          position: 'top'
+        })
+        await cargarContratos()
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error al actualizar el estado',
+          position: 'top'
+        })
+      }
+    } catch (error) {
+      console.error(error)
+      $q.notify({
+        type: 'negative',
+        message: 'Error al actualizar el estado',
+        position: 'top'
+      })
+    }
+  })
+}
+
+onMounted(async () => {
+  await cargarEmpleados()
+  await cargarContratos()
+
+  // Verificar si viene desde registro de empleado
+  const empleadoRecienRegistrado = sessionStorage.getItem('empleadoRecienRegistrado')
+  
+  if (empleadoRecienRegistrado) {
+    try {
+      const empleadoData = JSON.parse(empleadoRecienRegistrado)
+      
+      // Esperar un poco a que la lista de empleados esté lista
+      setTimeout(() => {
+        const empleadoEnLista = listaEmpleados.value.find(e => e.id === empleadoData.id)
+        
+        if (empleadoEnLista) {
+          // Seleccionar el empleado en el formulario
+          empleadoSeleccionado.value = empleadoEnLista
+          
+          // Pre-cargar datos automáticamente
+          cargarDatosEmpleado(empleadoEnLista)
+          
+          // Limpiar el sessionStorage
+          sessionStorage.removeItem('empleadoRecienRegistrado')
+          
+          // Scroll al formulario
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          })
+          
+          $q.notify({
+            type: 'positive',
+            message: `Empleado ${empleadoEnLista.nombres} ${empleadoEnLista.apellidos} cargado. Completa el contrato.`,
+            position: 'top'
+          })
+        }
+      }, 300)
+    } catch (error) {
+      console.error('Error al pre-cargar empleado:', error)
+    }
+  }
 })
+
+// Watch para limpiar fechaFin cuando es indefinido
+watch(() => formulario.value.tipoContrato, (nuevoTipo) => {
+  if (nuevoTipo === 'Por tiempo indefinido') {
+    formulario.value.fechaFin = ''
+  }
+})
+
 // Estadísticas Computed
 const contratosActivos = computed(() => {
   return listaContratos.value.filter(c => c.estado === 'Activo').length
