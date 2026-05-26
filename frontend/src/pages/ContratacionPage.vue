@@ -1,5 +1,18 @@
 <template>
-  <q-page padding>
+  <!-- LOADER MIENTRAS CARGA -->
+  <div v-if="cargando" class="loading-page">
+    <div class="spinner-wrapper">
+      <q-spinner
+        color="primary"
+        size="60px"
+      />
+      <div class="text-subtitle2 q-mt-md text-center">
+        Cargando empleados...
+      </div>
+    </div>
+  </div>
+
+  <q-page padding v-else>
 
     <!-- Header -->
     <div class="row items-center justify-between q-mb-lg">
@@ -186,7 +199,7 @@
           <!-- ACTIVO -->
           <div class="q-mb-lg">
             <q-toggle
-              v-model="empleado.activo"
+              v-model="empleado.estado"
               label="Empleado Activo"
               color="primary"
             />
@@ -512,10 +525,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useQuasar } from 'quasar'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 
 const router = useRouter()
+const route = useRoute()
 
 const verDetalle = (id) => {
   router.push({
@@ -526,6 +540,7 @@ const verDetalle = (id) => {
 
 const $q = useQuasar()
 
+const cargando = ref(true)
 const editando = ref(false)
 
   const empleadoInicial = {
@@ -539,7 +554,7 @@ const editando = ref(false)
     departamentoId: null,
     telefono: '',
     correo: '',
-    activo: true
+    estado: true
   }
 
 const depto = ref({
@@ -584,7 +599,7 @@ const empleadosFiltrados = computed(() => {
 
     const coincideEstado =
       filtros.value.estado === null ||
-      emp.activo === filtros.value.estado
+      emp.estado === filtros.value.estado
 
     return (
       coincideBusqueda &&
@@ -618,9 +633,9 @@ const columnasEmpleados = [
   },
 
   {
-    name: 'activo',
+    name: 'estado',
     label: 'Estado',
-    field: 'activo',
+    field: 'estado',
     align: 'center',
     format: val => val ? 'Activo' : 'Inactivo'
   },
@@ -679,6 +694,7 @@ const cargarDepartamentos = async () => {
 
 const cargarEmpleados = async () => {
   try {
+    cargando.value = true
     const res = await fetch(
       'http://localhost:3000/api/empleados'
     )
@@ -690,7 +706,7 @@ const cargarEmpleados = async () => {
     listaEmpleados.value = Array.isArray(data)
       ? data.map(emp => ({
           ...emp,
-          activo: emp.activo ?? emp.estado ?? true
+          estado: emp.estado ?? true
         }))
       : []
 
@@ -698,14 +714,40 @@ const cargarEmpleados = async () => {
 
   } catch (error) {
     console.error('[v0] Error cargando empleados:', error)
+  } finally {
+    cargando.value = false
   }
 }
+onMounted(async () => {
 
-onMounted(() => {
-  cargarDepartamentos()
-  cargarEmpleados()
+  // CARGAR DATOS
+  await cargarDepartamentos()
+  await cargarEmpleados()
+
+  // VERIFICAR SI VIENE EN MODO EDICION
+  const idEmpleado = route.query.editar
+
+  if (idEmpleado) {
+
+    console.log('[v0] ID RECIBIDO:', idEmpleado)
+
+    // BUSCAR EMPLEADO
+    const empleadoEncontrado =
+      listaEmpleados.value.find(
+        emp => Number(emp.id) === Number(idEmpleado)
+      )
+
+    console.log(
+      '[v0] EMPLEADO ENCONTRADO:',
+      empleadoEncontrado
+    )
+
+    // ACTIVAR MODO EDICION
+    if (empleadoEncontrado) {
+      editarEmpleado(empleadoEncontrado)
+    }
+  }
 })
-
 const guardarDepartamento = async () => {
   try {
 
@@ -759,7 +801,7 @@ const crearEmpleadoAPI = async (datosEmpleado) => {
       departamentoId: datosEmpleado.departamentoId,
       telefono: datosEmpleado.telefono,
       correo: datosEmpleado.correo,
-      activo: datosEmpleado.activo
+      estado: datosEmpleado.estado
     }
 
     const res = await fetch(
@@ -819,11 +861,13 @@ const editarEmpleado = (emp) => {
     dui: emp.dui || '',
     nit: emp.nit || '',
     nup_afp: emp.nup_afp || '',
-    fechaNacimiento: emp.fechaNacimiento || '',
+    fechaNacimiento: emp.fechaNacimiento
+      ? emp.fechaNacimiento.split('T')[0]
+      : '',
     departamentoId: emp.departamentoId || null,
     telefono: emp.telefono || '',
     correo: emp.correo || '',
-    activo: emp.activo ?? true
+    estado: emp.estado ?? true
   }
 
   console.log('[v0] Datos del formulario cargados')
@@ -848,7 +892,7 @@ const actualizarEmpleado = async () => {
       departamentoId: empleado.value.departamentoId,
       telefono: empleado.value.telefono,
       correo: empleado.value.correo,
-      activo: empleado.value.activo
+      estado: Boolean(empleado.value.estado),
     }
 
     console.log('[v0] Actualizando empleado con ID:', empleado.value.id)
@@ -1053,5 +1097,33 @@ const eliminarEmpleado = (id) => {
 
 .gap-xs {
   gap: 4px;
+}
+
+/* LOADING ANIMATIONS */
+.loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 48px); /* Full viewport height minus header/footer if any */
+  padding: 40px;
+  width: 100%;
+}
+
+.spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

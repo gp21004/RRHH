@@ -1,5 +1,18 @@
 <template>
-  <q-page padding class="page-bg">
+  <!-- LOADER MIENTRAS CARGA -->
+  <div v-if="cargando" class="loading-page">
+    <div class="spinner-wrapper">
+      <q-spinner
+        color="primary"
+        size="60px"
+      />
+      <div class="text-subtitle2 q-mt-md text-center">
+        Cargando contratos...
+      </div>
+    </div>
+  </div>
+
+  <q-page padding v-else>
     <!-- Header -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
@@ -82,11 +95,20 @@
 
     <!-- Nuevo Contrato Form -->
     <div class="q-mb-lg">
-      <h2 class="text-h6 text-weight-bold q-ma-none q-mb-md">Nuevo Contrato</h2>
+      <div class="row items-center justify-between q-mb-md">
+        <div>
+          <h2 class="text-h6 text-weight-bold q-ma-none q-mb-xs">
+            {{ editando ? 'Editar Contrato' : 'Nuevo Contrato' }}
+          </h2>
+          <div class="text-subtitle2 text-grey-7 q-ma-none">
+            {{ editando ? 'Actualiza la información del contrato' : 'Crea un nuevo contrato laboral' }}
+          </div>
+        </div>
+      </div>
       
       <q-card class="form-card">
         <q-card-section class="q-pa-lg">
-          <q-form @submit.prevent="guardarContrato" class="form-content">
+          <q-form @submit.prevent="editando ? actualizarContrato() : guardarContrato()" class="form-content">
             <!-- Sección 1: Datos del Empleado -->
             <div>
               <div class="section-header q-mb-md">
@@ -100,7 +122,7 @@
                     outlined 
                     dense 
                     v-model="empleadoSeleccionado" 
-                    :options="listaEmpleados" 
+                    :options="empleadosDisponibles" 
                     option-label="nombres"
                     @update:model-value="cargarDatosEmpleado"
                     label="Seleccionar Empleado *" 
@@ -231,15 +253,30 @@
                 <div class="col-auto">
                   <q-btn label="Limpiar" color="grey-7" flat @click="limpiarFormulario" />
                 </div>
+                <div 
+                  class="col-auto"
+                  v-if="editando"
+                >
+                  <q-btn
+                    label="Cancelar"
+                    color="negative"
+                    flat
+                    @click="cancelarEdicion"
+                  />
+                </div>
                 <q-space />
-                <div class="col-auto">
+                <div class="col-auto" v-if="!editando">
                   <q-btn label="Subir Formulario" color="positive" flat />
                 </div>
-                <div class="col-auto">
+                <div class="col-auto" v-if="!editando">
                   <q-btn label="Generar PDF" color="info" />
                 </div>
                 <div class="col-auto">
-                  <q-btn label="Guardar Contrato" type="submit" color="primary" />
+                  <q-btn 
+                    :label="editando ? 'Actualizar Contrato' : 'Guardar Contrato'" 
+                    type="submit" 
+                    color="primary" 
+                  />
                 </div>
               </div>
             </div>
@@ -382,9 +419,12 @@ import { useRouter } from 'vue-router'
 const $q = useQuasar()
 const router = useRouter()
 
+const cargando = ref(true)
+const editando = ref(false)
+let contratoEnEdicion = null
 
 // Estado del formulario
-const formulario = ref({
+const formularioInicial = {
   empleado: '',
   departamento: '',
   cargo: '',
@@ -399,13 +439,33 @@ const formulario = ref({
   diasLaborales: [],
   periodoPrueba: '',
   clausulas: ''
-})
+}
+
+const formulario = ref({ ...formularioInicial })
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 const periodosPrueba = ['15 días', '30 días', '60 días', '90 días', 'Sin período de prueba']
 
 const listaEmpleados = ref([])
 const empleadoSeleccionado = ref(null)
+
+const empleadosDisponibles = computed(() => {
+  const empleadosConContratoActivo = listaContratos.value
+    .filter(c => c.estado === 'Activo')
+    .map(c => c.empleadoId)
+
+  return listaEmpleados.value.filter(empleado => {
+    // Permitir el empleado actual cuando se edita
+    if (
+      editando.value &&
+      contratoEnEdicion?.empleadoId === empleado.id
+    ) {
+      return true
+    }
+
+    return !empleadosConContratoActivo.includes(empleado.id)
+  })
+})
 
 const listaContratos = ref([])
 const filtroEmpleado = ref('')
@@ -460,6 +520,7 @@ const cargarEmpleados = async () => {
 }
 const cargarContratos = async () => {
   try {
+    cargando.value = true
     const res = await fetch('http://localhost:3000/api/contratos')
 
     const data = await res.json()
@@ -470,6 +531,8 @@ const cargarContratos = async () => {
   } catch (error) {
     console.error('Error al cargar contratos:', error)
     listaContratos.value = []
+  } finally {
+    cargando.value = false
   }
 }
 const cargarDatosEmpleado = () => {
@@ -518,22 +581,7 @@ const toggleDia = (dia) => {
 }
 
 const limpiarFormulario = () => {
-  formulario.value = {
-    empleado: '',
-    departamento: '',
-    cargo: '',
-    dui: '',
-    tipoContrato: '',
-    fechaInicio: '',
-    fechaFin: '',
-    salarioContratado: '',
-    jornada: '',
-    horaInicio: '',
-    horaFin: '',
-    diasLaborales: [],
-    periodoPrueba: '',
-    clausulas: ''
-  }
+  formulario.value = { ...formularioInicial }
   empleadoSeleccionado.value = null
 }
 
@@ -622,6 +670,9 @@ const verContrato = (contrato) => {
 }
 
 const editarContrato = (contrato) => {
+  console.log('[v0] Editando contrato:', contrato)
+  
+  contratoEnEdicion = contrato
   empleadoSeleccionado.value = listaEmpleados.value.find(e => e.id === contrato.empleadoId)
   formulario.value = {
     empleado: empleadoSeleccionado.value?.nombres || '',
@@ -639,7 +690,78 @@ const editarContrato = (contrato) => {
     periodoPrueba: contrato.periodoPrueba,
     clausulas: contrato.clausulas
   }
+  
+  console.log('[v0] Datos del formulario cargados para edición')
+  editando.value = true
+  
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const actualizarContrato = async () => {
+  try {
+    if (!contratoEnEdicion) {
+      throw new Error('No hay contrato en edición')
+    }
+
+    const horario = `${formulario.value.horaInicio} - ${formulario.value.horaFin}`
+
+    const body = {
+      tipoContrato: formulario.value.tipoContrato,
+      cargo: formulario.value.cargo,
+      fechaInicio: formulario.value.fechaInicio,
+      fechaFin: formulario.value.fechaFin || null,
+      salarioContratado: parseFloat(formulario.value.salarioContratado),
+      jornada: formulario.value.jornada,
+      horario: horario,
+      diasLaborales: formulario.value.diasLaborales.join(', '),
+      periodoPrueba: formulario.value.periodoPrueba,
+      clausulas: formulario.value.clausulas
+    }
+
+    console.log('[v0] Actualizando contrato con ID:', contratoEnEdicion.id)
+    console.log('[v0] Datos enviados:', body)
+
+    const res = await fetch(`http://localhost:3000/api/contratos/${contratoEnEdicion.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+
+    const data = await res.json()
+
+    if (res.ok) {
+      $q.notify({
+        type: 'positive',
+        message: 'Contrato actualizado correctamente',
+        position: 'top'
+      })
+
+      cancelarEdicion()
+      await cargarContratos()
+    } else {
+      console.error('[v0] Error en respuesta:', data)
+      $q.notify({
+        type: 'negative',
+        message: data.message || 'Error al actualizar contrato'
+      })
+    }
+
+  } catch (error) {
+    console.error('[v0] Error en actualizarContrato:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al actualizar contrato'
+    })
+  }
+}
+
+const cancelarEdicion = () => {
+  formulario.value = { ...formularioInicial }
+  empleadoSeleccionado.value = null
+  editando.value = false
+  contratoEnEdicion = null
 }
 
 const cambiarEstadoContrato = (contrato) => {
@@ -694,7 +816,20 @@ const cambiarEstadoContrato = (contrato) => {
 onMounted(async () => {
   await cargarEmpleados()
   await cargarContratos()
+  const contratoGuardado = sessionStorage.getItem('contratoEditar')
 
+  if (contratoGuardado) {
+    try {
+      const contratoData = JSON.parse(contratoGuardado)
+
+      editarContrato(contratoData)
+
+      sessionStorage.removeItem('contratoEditar')
+
+    } catch (error) {
+      console.error('Error cargando contrato para edición:', error)
+    }
+  }
   // Verificar si viene desde registro de empleado
   const empleadoRecienRegistrado = sessionStorage.getItem('empleadoRecienRegistrado')
   
@@ -1003,5 +1138,33 @@ const contratosFiltrados = computed(() => {
 
 .q-col-gutter-lg {
   gap: 32px !important;
+}
+
+/* LOADING ANIMATIONS */
+.loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 48px); /* Full viewport height minus header/footer if any */
+  padding: 40px;
+  width: 100%;
+}
+
+.spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

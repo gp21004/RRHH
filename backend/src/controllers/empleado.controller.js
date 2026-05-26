@@ -138,33 +138,37 @@ const actualizarEmpleado = async (req, res) => {
       estado
     } = req.body
 
-    const empleadoActualizado = await prisma.empleado.update({
-      where: {
-        id
-      },
+const empleadoActualizado = await prisma.empleado.update({
+  where: {
+    id
+  },
 
-      data: {
-        nombres,
-        apellidos,
+  data: {
+    nombres,
+    apellidos,
 
-        dui,
-        nit: nit || null,
-        nup_afp: nup_afp || null,
+    dui,
+    nit: nit || null,
+    nup_afp: nup_afp || null,
 
-        fechaNacimiento: fechaNacimiento
-          ? new Date(fechaNacimiento)
-          : null,
+    fechaNacimiento: fechaNacimiento
+      ? new Date(fechaNacimiento + 'T00:00:00')
+      : null,
 
-        telefono: telefono || null,
-        correo: correo || null,
+    telefono: telefono || null,
+    correo: correo || null,
 
-        estado: estado ?? true,
+    estado: estado === false ? false : true,
 
-        departamento: departamentoId
-          ? { connect: { id: Number(departamentoId) } }
-          : undefined
-      }
-    })
+    departamento: departamentoId
+      ? {
+          connect: {
+            id: Number(departamentoId)
+          }
+        }
+      : undefined
+  }
+})
 
     res.json(empleadoActualizado)
 

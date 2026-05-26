@@ -48,77 +48,160 @@
 
 
   // CREAR CONTRATO
-  const crearContrato = async (req, res) => {
+ const crearContrato = async (req, res) => {
 
-    try {
+  try {
 
-      const {
+    const {
+      empleadoId,
+      tipoContrato,
+      cargo,
+      fechaInicio,
+      fechaFin,
+      salarioContratado,
+      jornada,
+      horario,
+      diasLaborales,
+      periodoPrueba,
+      clausulas
+    } = req.body
+
+    // VALIDAR SI YA TIENE CONTRATO ACTIVO
+    const contratoActivo = await prisma.contrato.findFirst({
+      where: {
+        empleadoId: empleadoId,
+        estado: 'Activo'
+      }
+    })
+
+    if (contratoActivo) {
+      return res.status(400).json({
+        message: 'El empleado ya tiene un contrato activo'
+      })
+    }
+
+    // CREAR CONTRATO
+    const contrato = await prisma.contrato.create({
+      data: {
         empleadoId,
         tipoContrato,
         cargo,
-        fechaInicio,
-        fechaFin,
+        fechaInicio: new Date(fechaInicio),
+        fechaFin: fechaFin ? new Date(fechaFin) : null,
         salarioContratado,
         jornada,
         horario,
         diasLaborales,
         periodoPrueba,
-        clausulas
-      } = req.body
+        clausulas,
+        estado: 'Activo'
+      }
+    })
 
-      const contrato = await prisma.contrato.create({
-        data: {
-          empleadoId,
-          tipoContrato,
-          cargo,
-          fechaInicio: new Date(fechaInicio),
-          fechaFin: fechaFin ? new Date(fechaFin) : null,
-          salarioContratado,
-          jornada,
-          horario,
-          diasLaborales,
-          periodoPrueba,
-          clausulas,
-          estado: 'Activo'
-        }
-      })
+    res.status(201).json(contrato)
 
-      res.status(201).json(contrato)
+  } catch (error) {
 
-    } catch (error) {
+    console.error(error)
 
-      console.error(error)
-
-      res.status(500).json({
-        error: error.message
-      })
-    }
+    res.status(500).json({
+      error: error.message
+    })
   }
+}
 
-  // ACTUALIZAR CONTRATO
-  const actualizarContrato = async (req, res) => {
+ // ACTUALIZAR CONTRATO
+const actualizarContrato = async (req, res) => {
 
-    try {
+  try {
 
-      const { id } = req.params
-      const { estado } = req.body
+    const { id } = req.params
 
-      const contrato = await prisma.contrato.update({
-        where: { id: Number(id) },
-        data: { estado }
-      })
+    const {
+      empleadoId,
+      tipoContrato,
+      cargo,
+      fechaInicio,
+      fechaFin,
+      salarioContratado,
+      jornada,
+      horario,
+      diasLaborales,
+      periodoPrueba,
+      clausulas,
+      estado
+    } = req.body
 
-      res.json(contrato)
+    const contrato = await prisma.contrato.update({
+      where: {
+        id: Number(id)
+      },
 
-    } catch (error) {
+      data: {
 
-      console.error(error)
+        ...(empleadoId !== undefined && {
+          empleadoId
+        }),
 
-      res.status(500).json({
-        error: error.message
-      })
-    }
+        ...(tipoContrato !== undefined && {
+          tipoContrato
+        }),
+
+        ...(cargo !== undefined && {
+          cargo
+        }),
+
+        ...(fechaInicio !== undefined && {
+          fechaInicio: new Date(fechaInicio)
+        }),
+
+        ...(fechaFin !== undefined && {
+          fechaFin: fechaFin
+            ? new Date(fechaFin)
+            : null
+        }),
+
+        ...(salarioContratado !== undefined && {
+          salarioContratado
+        }),
+
+        ...(jornada !== undefined && {
+          jornada
+        }),
+
+        ...(horario !== undefined && {
+          horario
+        }),
+
+        ...(diasLaborales !== undefined && {
+          diasLaborales
+        }),
+
+        ...(periodoPrueba !== undefined && {
+          periodoPrueba
+        }),
+
+        ...(clausulas !== undefined && {
+          clausulas
+        }),
+
+        ...(estado !== undefined && {
+          estado
+        })
+      }
+    })
+
+    res.json(contrato)
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      error: error.message
+    })
   }
+}
 
   // OBTENER UN CONTRATO POR ID
   const obtenerContratoPorId = async (req, res) => {
