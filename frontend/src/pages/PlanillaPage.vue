@@ -25,7 +25,7 @@
       <q-table
         :rows="detallePlanilla"
         :columns="columnasPlanilla"
-        row-key="empleadoNombre"
+        row-key="empleadoId"
         flat bordered
         hide-pagination
         :pagination="{ rowsPerPage: 0 }"
@@ -116,24 +116,57 @@ const totalPlanilla = computed(() => {
 
 const generarPlanilla = async () => {
   const res = await fetch('http://localhost:3000/api/planillas/generar')
-  detallePlanilla.value = await res.json()
-  $q.notify({ type: 'info', message: 'Planilla calculada' })
+
+  const data = await res.json()
+
+  console.log('planilla', data)
+
+  detallePlanilla.value = data
+
+  $q.notify({
+    type: 'info',
+    message: 'Planilla calculada'
+  })
 }
 
 const guardarEnHistorial = async () => {
   try {
+    // Verificar si ya existe una planilla para este mes/año
+    const resHistorial = await fetch('http://localhost:3000/api/planillas/historial')
+    if (resHistorial.ok) {
+      const planillas = await resHistorial.json()
+      const yaExiste = planillas.find(
+        p => p.mes === mesPlanilla.value && p.anio == anioPlanilla.value
+      )
+      
+      if (yaExiste) {
+        $q.notify({
+          type: 'warning',
+          message: `Ya existe una planilla guardada para ${mesPlanilla.value} ${anioPlanilla.value}`,
+          position: 'top',
+          timeout: 3000
+        })
+        return
+      }
+    }
+
+    // Si no existe, guardar la nueva planilla
     const res = await fetch('http://localhost:3000/api/planillas/guardar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mes: mesPlanilla.value, anio: anioPlanilla.value, detalles: detallePlanilla.value })
     })
-    if (res.ok) $q.notify({ type: 'positive', message: 'Guardado correctamente' })
+    if (res.ok) {
+      $q.notify({ type: 'positive', message: 'Guardado correctamente' })
+    }
   } catch (e) { console.error(e) }
 }
 
 const exportarPDF = () => {
   window.print() 
 }
+
+
 </script>
 
 <style lang="scss">

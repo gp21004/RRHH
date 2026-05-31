@@ -20,82 +20,85 @@ model Departamento {
 // --- TABLA DE EMPLEADOS (Contexto El Salvador) ---
 
 model Empleado {
-  id             Int               @id @default(autoincrement())
-  nombres        String
-  apellidos      String
-  dui            String            @unique // Formato: 00000000-0
-  nit            String?           @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
-  nup_afp        String?           @unique // Número Único Previsional
-  fechaIngreso   DateTime          @default(now())
-  fechaNacimiento DateTime         @db.Date
-  estado         Boolean           @default(true) // Activo o Inactivo
-  correo         String?
-  telefono       String?
-  departamentoId Int
-  departamento   Departamento      @relation(fields: [departamentoId], references: [id])
-  
-  planillas      DetallePlanilla[]
-  contratos      Contrato[]
+  id              Int          @id @default(autoincrement())
+  nombres         String
+  apellidos       String
+  dui             String       @unique // Formato: 00000000-0
+  nit             String?      @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
+  nup_afp         String?      @unique // Número Único Previsional
+  fechaIngreso    DateTime     @default(now())
+  fechaNacimiento DateTime     @db.Date
+  estado          Boolean      @default(true) // Activo o Inactivo
+  correo          String?
+  telefono        String?
+  departamentoId  Int
+  departamento    Departamento @relation(fields: [departamentoId], references: [id])
+
+  planillas DetallePlanilla[]
+  contratos Contrato[]
 }
 
 // --- TABLAS DE PLANILLA (Ajustadas para el controlador) ---
 
 model Planilla {
   id              Int               @id @default(autoincrement())
-  mes             String            // Cambiado a String para guardar "Mayo", "Junio", etc.
+  mes             String // Cambiado a String para guardar "Mayo", "Junio", etc.
   anio            Int
   tipo            String            @default("Mensual")
   estado          String            @default("Borrador")
   fechaGeneracion DateTime          @default(now())
+  @@unique([mes, anio])
   detalles        DetallePlanilla[]
 }
 
 model DetallePlanilla {
-  id             Int      @id @default(autoincrement())
-  planillaId     Int
-  empleadoId     Int?     // Opcional por si el empleado se borra en el futuro, el registro queda
-  
-  // La "Foto" financiera del mes (Lo que el controlador envía)
-  empleadoNombre String   // Guardamos el nombre completo como texto para el historial
-  salarioContratado  Decimal  @db.Decimal(10, 2)
-  isss           Decimal  @db.Decimal(10, 2)
-  afp            Decimal  @db.Decimal(10, 2)
-  renta          Decimal  @db.Decimal(10, 2)
-  salarioLiquido Decimal  @db.Decimal(10, 2)
+  id         Int  @id @default(autoincrement())
+  planillaId Int
+  empleadoId Int? // Opcional por si el empleado se borra en el futuro, el registro queda
 
-  planilla       Planilla @relation(fields: [planillaId], references: [id])
-  empleado       Empleado? @relation(fields: [empleadoId], references: [id])
+  // La "Foto" financiera del mes (Lo que el controlador envía)
+  empleadoNombre    String // Guardamos el nombre completo como texto para el historial
+  salarioContratado Decimal  @db.Decimal(10, 2)
+  isss              Decimal  @db.Decimal(10, 2)
+  afp               Decimal  @db.Decimal(10, 2)
+  renta             Decimal  @db.Decimal(10, 2)
+  contratoId        Int
+  contrato          Contrato @relation(fields: [contratoId], references: [id])
+  salarioLiquido    Decimal  @db.Decimal(10, 2)
+  planilla Planilla  @relation(fields: [planillaId], references: [id])
+  empleado Empleado? @relation(fields: [empleadoId], references: [id])
 }
 
 // --- TABLA DE USUARIOS (Autenticación) ---
 
 model Usuario {
-  id              Int      @id @default(autoincrement())
-  username        String   @unique
-  password        String   // Hash bcrypt
-  nombreCompleto  String
-  correo          String?
-  rol             String   @default("admin") // admin, supervisor, empleado
-  activo          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  password       String // Hash bcrypt
+  nombreCompleto String
+  correo         String?
+  rol            String   @default("admin") // admin, supervisor, empleado
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
-model Contrato {
-  id                 Int      @id @default(autoincrement())
-  empleadoId         Int
-  tipoContrato       String
-  cargo              String
-  fechaInicio        DateTime @db.Date
-  fechaFin           DateTime? @db.Date
-  salarioContratado  Decimal  @db.Decimal(10, 2)
-  jornada            String
-  horario            String
-  diasLaborales      String
-  periodoPrueba      String
-  clausulas          String?
-  estado             String   @default("Vigente") // Vigente, Finalizado, Suspendido
 
+model Contrato {
+  id                Int       @id @default(autoincrement())
+  empleadoId        Int
+  tipoContrato      String
+  cargo             String
+  fechaInicio       DateTime  @db.Date
+  fechaFin          DateTime? @db.Date
+  salarioContratado Decimal   @db.Decimal(10, 2)
+  jornada           String
+  horario           String
+  diasLaborales     String
+  periodoPrueba     String
+  clausulas         String?
+  estado            String    @default("Vigente") // Vigente, Finalizado, Suspendido
+
+  detallePlanillas DetallePlanilla[]
   // Relación con Empleado (un empleado puede tener muchos contratos a lo largo del tiempo)
-  empleado           Empleado @relation(fields: [empleadoId], references: [id])
- 
+  empleado         Empleado          @relation(fields: [empleadoId], references: [id])
 }

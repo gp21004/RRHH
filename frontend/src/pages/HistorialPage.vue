@@ -47,7 +47,7 @@
         <tbody>
           <tr v-for="det in planillaSeleccionada.detalles" :key="det.id">
             <td>{{ det.empleadoNombre }}</td>
-            <td class="text-right">{{ formatDinero(det.salarioBase) }}</td>
+            <td class="text-right">{{ formatDinero(det.salarioContratado) }}</td>
             <td class="text-right">{{ formatDinero(det.isss) }}</td>
             <td class="text-right">{{ formatDinero(det.afp) }}</td>
             <td class="text-right">{{ formatDinero(det.renta) }}</td>
@@ -64,7 +64,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const historial = ref([])
 const loading = ref(false)
 const planillaSeleccionada = ref(null)
@@ -87,11 +89,11 @@ const cargarHistorial = async () => {
   } finally { loading.value = false }
 }
 
-const verPlanilla = async (id) => {
-  const res = await fetch(`http://localhost:3000/api/planillas/historial/${id}`)
-  planillaSeleccionada.value = await res.json()
-  // Esperamos a que Vue renderice el componente oculto y disparamos la impresión
-  setTimeout(() => { window.print() }, 500)
+const verPlanilla = (id) => {
+  router.push({
+    name: 'detalle-planilla',
+    params: { id }
+  })
 }
 
 onMounted(cargarHistorial)

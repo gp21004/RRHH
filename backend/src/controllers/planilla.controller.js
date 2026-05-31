@@ -2,56 +2,130 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const generarPlanillaMensual = async (req, res) => {
-    try {
-        const empleados = await prisma.empleado.findMany();
-        const planillaCalculada = empleados.map(emp => {
-            const salario = Number(emp.salarioBase);
-            let isss = salario > 1000 ? 30.00 : salario * 0.03;
-            let afp = salario * 0.0725;
-            let rentaImponible = salario - isss - afp;
-            let isr = 0;
 
-            if (rentaImponible > 472.00 && rentaImponible <= 895.24) isr = ((rentaImponible - 472.00) * 0.10) + 17.67;
-            else if (rentaImponible > 895.24 && rentaImponible <= 2038.10) isr = ((rentaImponible - 895.24) * 0.20) + 60.00;
-            else if (rentaImponible > 2038.10) isr = ((rentaImponible - 2038.10) * 0.30) + 288.57;
+  try {
 
-            return {
-                empleadoId: emp.id, // <-- Importante para tu nueva relación en Prisma
-                empleadoNombre: `${emp.nombres} ${emp.apellidos}`,
-                salarioBase: salario,
-                isss: isss,
-                afp: afp,
-                renta: isr,
-                salarioLiquido: (salario - isss - afp - isr)
-            };
-        });
-        res.status(200).json(planillaCalculada);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+    const contratos = await prisma.contrato.findMany({
+      where: {
+        estado: 'Activo'
+      },
+      include: {
+        empleado: true
+      }
+    })
+        console.log('contratos encontrados')
+        console.log(contratos)
+
+    const planillaCalculada = contratos.map(contrato => {
+
+      const salario = Number(contrato.salarioContratado)
+
+      let isss = salario > 1000
+        ? 30
+        : salario * 0.03
+
+      let afp = salario * 0.0725
+
+      const rentaImponible = salario - isss - afp
+
+      let isr = 0
+
+      if (rentaImponible > 472 && rentaImponible <= 895.24) {
+        isr = ((rentaImponible - 472) * 0.10) + 17.67
+      }
+      else if (rentaImponible > 895.24 && rentaImponible <= 2038.10) {
+        isr = ((rentaImponible - 895.24) * 0.20) + 60
+      }
+      else if (rentaImponible > 2038.10) {
+        isr = ((rentaImponible - 2038.10) * 0.30) + 288.57
+      }
+
+        return {
+
+        empleadoId: contrato.empleado.id,
+
+        contratoId: contrato.id,
+
+        empleadoNombre:
+            `${contrato.empleado.nombres} ${contrato.empleado.apellidos}`,
+
+        salarioBase: salario,
+
+        isss,
+
+        afp,
+
+        renta: isr,
+
+        salarioLiquido:
+            salario - isss - afp - isr
+        }
+
+    })
+
+    res.status(200).json(planillaCalculada)
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      error: error.message
+    })
+
+  }
+
+}
 
 const guardarPlanillaHistorial = async (req, res) => {
-    const { mes, anio, detalles } = req.body;
-    try {
-        const nuevaPlanilla = await prisma.planilla.create({
-            data: {
-                mes,
-                anio,
-                tipo: "Mensual",
-                estado: "Pagada",
-                detalles: {
-                    create: detalles // Prisma creará automáticamente todos los registros en DetallePlanilla
-                }
-            }
-        });
-        res.status(201).json(nuevaPlanilla);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al guardar el historial' });
+  const { mes, anio, detalles } = req.body
+
+  try {
+
+    const planillaExistente = await prisma.planilla.findFirst({
+      where: {
+        mes,
+        anio
+      }
+    })
+
+    if (planillaExistente) {
+      return res.status(400).json({
+        error: `La planilla de ${mes} ${anio} ya fue generada`
+      })
     }
 
-};// Obtener lista de todas las planillas guardadas
+    const nuevaPlanilla = await prisma.planilla.create({
+      data: {
+        mes,
+        anio,
+        tipo: 'Mensual',
+        estado: 'Pagada',
+        detalles: {
+          create: detalles.map(det => ({
+            empleadoId: det.empleadoId,
+            contratoId: det.contratoId,
+            empleadoNombre: det.empleadoNombre,
+            salarioContratado: det.salarioBase,
+            isss: det.isss,
+            afp: det.afp,
+            renta: det.renta,
+            salarioLiquido: det.salarioLiquido
+          }))
+        }
+      }
+    })
+
+    res.status(201).json(nuevaPlanilla)
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      error: 'Error al guardar el historial'
+    })
+  }
+}
+// Obtener lista de todas las planillas guardadas
 const obtenerHistorial = async (req, res) => {
     try {
         const historial = await prisma.planilla.findMany({
