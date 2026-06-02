@@ -180,10 +180,77 @@ const obtenerDetalleHistorial = async (req, res) => {
     });
   }
 };
+const obtenerDetalleEmpleadoPlanilla = async (req, res) => {
+  try {
+    const { planillaId, empleadoId } = req.params
+
+    const detalle = await prisma.detallePlanilla.findFirst({
+      where: {
+        planillaId: Number(planillaId),
+        empleadoId: Number(empleadoId)
+      },
+      include: {
+        empleado: {
+          include: {
+            departamento: true
+          }
+        },
+        contrato: true,
+        planilla: true
+      }
+    })
+
+    if (!detalle) {
+      return res.status(404).json({
+        error: 'No se encontró el detalle del empleado'
+      })
+    }
+
+    res.status(200).json({
+      id: detalle.id,
+
+      nombre: detalle.empleadoNombre,
+
+      cargo: detalle.contrato?.cargo || '',
+
+      departamento:
+        detalle.empleado?.departamento?.nombre || '',
+
+      periodo:
+        `${detalle.planilla.mes} ${detalle.planilla.anio}`,
+
+      cedula: detalle.empleado?.dui || '',
+
+      email: detalle.empleado?.correo || '',
+
+      telefono: detalle.empleado?.telefono || '',
+
+      salarioBase: Number(detalle.salarioContratado),
+
+      isss: Number(detalle.isss),
+
+      afp: Number(detalle.afp),
+
+      isr: Number(detalle.renta),
+
+      netoAPagar: Number(detalle.salarioLiquido),
+
+      fechaGeneracion: detalle.planilla.fechaGeneracion
+    })
+
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json({
+      error: error.message
+    })
+  }
+}
 
 module.exports = {
   generarPlanillaMensual,
   guardarPlanillaHistorial,
   obtenerHistorial,
-  obtenerDetalleHistorial
+  obtenerDetalleHistorial,
+  obtenerDetalleEmpleadoPlanilla
 };

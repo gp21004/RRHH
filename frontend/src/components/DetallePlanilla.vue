@@ -138,6 +138,22 @@
               {{ formatDinero(props.row.salarioLiquido) }}
             </q-td>
           </template>
+
+          <template v-slot:body-cell-acciones="props">
+            <q-td :props="props" class="text-center">
+              <q-btn
+                flat
+                dense
+                round
+                icon="visibility"
+                color="primary"
+                size="sm"
+                @click="verDetalleEmpleado(props.row.empleadoId)"
+              >
+                <q-tooltip>Ver detalle del empleado</q-tooltip>
+              </q-btn>
+            </q-td>
+          </template>
         </q-table>
       </q-card-section>
     </q-card>
@@ -208,12 +224,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 
 
 
 const route = useRoute()
+const $router = useRouter()
 const $q = useQuasar()
 
 const cargando = ref(true)
@@ -231,7 +248,8 @@ const columnasPlanilla = [
   { name: 'isss', label: 'ISSS (3%)', field: 'isss', align: 'right' },
   { name: 'afp', label: 'AFP (7.25%)', field: 'afp', align: 'right' },
   { name: 'renta', label: 'Renta (ISR)', field: 'renta', align: 'right' },
-  { name: 'salarioLiquido', label: 'Salario Líquido', field: 'salarioLiquido', align: 'right' }
+  { name: 'salarioLiquido', label: 'Salario Líquido', field: 'salarioLiquido', align: 'right' },
+  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center', style: 'width: 80px' }
 ]
 
 const formatDinero = (valor) => {
@@ -275,6 +293,8 @@ const cargarPlanilla = async () => {
     }
     
     planilla.value = await res.json()
+    console.log('PLANILLA:', planilla.value)
+    console.log('DETALLES:', planilla.value.detalles)
   } catch (error) {
     console.error('Error al cargar planilla:', error)
     $q.notify({
@@ -297,6 +317,15 @@ const exportarPDF = () => {
   })
 }
 
+const verDetalleEmpleado = (empleadoId) => {
+  $router.push({
+    name: 'detalle-empleado-planilla',
+    params: {
+      planillaId: route.params.id,
+      empleadoId
+    }
+  })
+}
 
 onMounted(cargarPlanilla)
 </script>

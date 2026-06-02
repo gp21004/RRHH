@@ -7,17 +7,18 @@ const {
     generarPlanillaMensual,
     guardarPlanillaHistorial,
     obtenerHistorial,
-    obtenerDetalleHistorial
+    obtenerDetalleHistorial,
+    obtenerDetalleEmpleadoPlanilla
 } = require('../controllers/planilla.controller.js');
 
-/**
- * RUTA: GET /api/planillas/generar
+/**Y
  * Descripción: Toma a los empleados actuales y calcula sus deducciones de ley 
  * (ISSS, AFP, Renta) para mostrarlos en la tabla del frontend.
  */
 router.get('/generar', generarPlanillaMensual);
 router.get('/historial', obtenerHistorial);
 router.get('/historial/:id', obtenerDetalleHistorial);
+router.get('/:planillaId/empleados/:empleadoId', obtenerDetalleEmpleadoPlanilla)
 /**
  * RUTA: POST /api/planillas/guardar
  * Descripción: Recibe la planilla calculada desde el frontend y la guarda 
