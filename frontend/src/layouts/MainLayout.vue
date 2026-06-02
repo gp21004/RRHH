@@ -90,8 +90,8 @@
       :width="250"
       :breakpoint="1024"
     >
-      <!-- Encabezado Drawer -->
-      <q-scroll-area class="fit">
+      <div class="column fit">
+        <!-- Encabezado Drawer -->
         <div class="q-pa-md">
           <q-item 
             clickable
@@ -107,127 +107,88 @@
           </q-item>
         </div>
 
-        <!-- Menú Principal -->
-        <!-- Menú Principal -->
-        <q-list separator class="text-white" style="border: none">
-          <!-- Sección Pagos -->
-          <q-item-label header class="text-uppercase text-weight-bold text-grey">
-            Pagos
-          </q-item-label>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/pagos"
-            :active="$route.path === '/pagos'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="credit_card" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Gestionar Pagos</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/invoices"
-            :active="$route.path === '/invoices'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="receipt" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Facturas</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/transacciones"
-            :active="$route.path === '/transacciones'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-md"
-          >
-            <q-item-section avatar>
-              <q-icon name="history" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Transacciones</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <!-- Sección Contratación -->
-          <q-item-label header class="text-uppercase text-weight-bold text-grey">
-            Contratación
-          </q-item-label>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/contratos"
-            :active="$route.path === '/contratos'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="description" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Contratos</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/contratacion"
-            :active="$route.path === '/contratacion'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-sm"
-          >
-            <q-item-section avatar>
-              <q-icon name="people" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Personal</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-            to="/planillas"
-            :active="$route.path === '/planillas'"
-            active-class="menu-active"
-            class="rounded-borders q-mb-md"
-          >
-            <q-item-section avatar>
-              <q-icon name="table_chart" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Planillas</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <!-- Sección Usuarios (solo admin) -->
-          <template v-if="userRole === 'admin' || userRole === 'supervisor'">
+        <!-- Menú Principal (scrollable) -->
+        <q-scroll-area class="col">
+          <q-list separator class="text-white" style="border: none">
+            <!-- Sección Pagos -->
             <q-item-label header class="text-uppercase text-weight-bold text-grey">
-              Administración
+              Pagos
             </q-item-label>
 
             <q-item
-              v-if="userRole === 'admin'"
               clickable
               v-ripple
-              to="/usuarios"
-              :active="$route.path === '/usuarios'"
+              to="/pagos"
+              :active="$route.path === '/pagos'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-sm"
+            >
+              <q-item-section avatar>
+                <q-icon name="credit_card" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Gestionar Pagos</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              to="/invoices"
+              :active="$route.path === '/invoices'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-sm"
+            >
+              <q-item-section avatar>
+                <q-icon name="receipt" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Facturas</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              to="/transacciones"
+              :active="$route.path === '/transacciones'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-md"
+            >
+              <q-item-section avatar>
+                <q-icon name="history" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Transacciones</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <!-- Sección Contratación -->
+            <q-item-label header class="text-uppercase text-weight-bold text-grey">
+              Contratación
+            </q-item-label>
+
+            <q-item
+              clickable
+              v-ripple
+              to="/contratos"
+              :active="$route.path === '/contratos'"
+              active-class="menu-active"
+              class="rounded-borders q-mb-sm"
+            >
+              <q-item-section avatar>
+                <q-icon name="description" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Contratos</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              to="/contratacion"
+              :active="$route.path === '/contratacion'"
               active-class="menu-active"
               class="rounded-borders q-mb-sm"
             >
@@ -235,51 +196,93 @@
                 <q-icon name="people" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>Usuarios</q-item-label>
+                <q-item-label>Personal</q-item-label>
               </q-item-section>
             </q-item>
 
             <q-item
               clickable
               v-ripple
-              to="/historial"
-              :active="$route.path === '/historial'"
+              to="/planillas"
+              :active="$route.path === '/planillas'"
               active-class="menu-active"
-              class="rounded-borders q-mb-sm"
+              class="rounded-borders q-mb-md"
             >
               <q-item-section avatar>
-                <q-icon name="analytics" />
+                <q-icon name="table_chart" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>Reportes</q-item-label>
+                <q-item-label>Planillas</q-item-label>
               </q-item-section>
             </q-item>
 
-            <q-item
-              v-if="userRole === 'admin'"
-              clickable
-              v-ripple
-              to="/configuracion"
-              :active="$route.path === '/configuracion'"
-              active-class="menu-active"
-              class="rounded-borders"
-            >
-              <q-item-section avatar>
-                <q-icon name="settings" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>Configuración</q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
-        </q-list>
-      </q-scroll-area>
+            <!-- Sección Usuarios (solo admin) -->
+            <template v-if="userRole === 'admin' || userRole === 'supervisor'">
+              <q-item-label header class="text-uppercase text-weight-bold text-grey">
+                Administración
+              </q-item-label>
 
-      <!-- Footer Drawer -->
-      <q-separator class="my-md" />
-      <div class="q-pa-md text-center text-grey-7 text-caption">
-        <div>GestionPro v1.0</div>
-        <div>© 2024 Todos los derechos reservados</div>
+              <q-item
+                v-if="userRole === 'admin'"
+                clickable
+                v-ripple
+                to="/usuarios"
+                :active="$route.path === '/usuarios'"
+                active-class="menu-active"
+                class="rounded-borders q-mb-sm"
+              >
+                <q-item-section avatar>
+                  <q-icon name="people" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Usuarios</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                v-ripple
+                to="/historial"
+                :active="$route.path === '/historial'"
+                active-class="menu-active"
+                class="rounded-borders q-mb-sm"
+              >
+                <q-item-section avatar>
+                  <q-icon name="analytics" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Reportes</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                v-if="userRole === 'admin'"
+                clickable
+                v-ripple
+                to="/configuracion"
+                :active="$route.path === '/configuracion'"
+                active-class="menu-active"
+                class="rounded-borders"
+              >
+                <q-item-section avatar>
+                  <q-icon name="settings" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Configuración</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-list>
+        </q-scroll-area>
+
+        <!-- Footer Drawer (siempre visible) -->
+        <div class="bg-dark border-top">
+          <q-separator class="my-md" />
+          <div class="q-pa-md text-center text-grey-7 text-caption">
+            <div>GestionPro v1.0</div>
+            <div>© 2024 Todos los derechos reservados</div>
+          </div>
+        </div>
       </div>
     </q-drawer>
 
@@ -349,13 +352,10 @@ function handleLogout() {
 
 .menu-active {
   background: rgba(74, 161, 255, 0.15) !important;
-  box-shadow: inset 2px 0 0 #4AA1FF, 0 0 12px rgba(74, 161, 255, 0.1);
+  box-shadow: inset 2px 0 0 #4AA1FF,
+              0 0 12px rgba(74, 161, 255, 0.1);
   color: #4AA1FF !important;
   font-weight: bold;
-}
-
-:deep(.min-h-screen) {
-  min-height: 100vh;
 }
 
 :deep(.gap-md) {
@@ -384,7 +384,45 @@ function handleLogout() {
   align-items: center;
 }
 
-/* Ocultar el separador de la lista del menú lateral */
+:deep(.column) {
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.col) {
+  flex: 1;
+  overflow: hidden;
+}
+
+:deep(.border-top) {
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* HEADER SIEMPRE VISIBLE */
+.fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 3000;
+}
+
+/* DRAWER FIJO */
+.fixed-drawer {
+  position: fixed;
+}
+
+/* CONTENEDOR PRINCIPAL */
+.page-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+/* SOLO EL CONTENIDO HACE SCROLL */
+:deep(.q-page-container) {
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* Eliminar líneas entre items */
 .q-list--separator > .q-item-type + .q-item-type,
 .q-list--separator > .q-virtual-scroll__content > .q-item-type + .q-item-type {
   border-top: none;

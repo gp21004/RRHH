@@ -392,6 +392,40 @@ onMounted(cargarPlanilla)
   }
 }
 
+/* LOADING ANIMATIONS */
+.loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.text-subtitle2 {
+  color: #e5e7eb;
+}
+
+.text-center {
+  text-align: center;
+}
 /* Estilos para impresión */
 @media print {
   @page {
@@ -430,5 +464,6 @@ onMounted(cargarPlanilla)
   .total-card {
     border: 1px solid #999 !important;
   }
+  
 }
 </style>

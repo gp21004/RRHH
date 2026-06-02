@@ -1,4 +1,11 @@
 <template>
+ <!-- LOADER MIENTRAS CARGA -->
+  <div v-if="loading" class="loading-page">
+    <div class="spinner-wrapper">
+      <q-spinner color="primary" size="60px" />
+      <p class="text-subtitle2 text-center q-mt-md">Cargando datos...</p>
+    </div>
+  </div>
   <q-page class="q-px-lg q-py-md">
     <!-- Header Welcome -->
     <div class="row items-center q-mb-lg">
@@ -691,5 +698,40 @@ onMounted(cargarDatos)
 
 :deep(.flex-1) {
   flex: 1;
+}
+
+/* LOADER ANIMATIONS */
+.loading-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.text-subtitle2 {
+  color: #e5e7eb;
+}
+
+.text-center {
+  text-align: center;
 }
 </style>
