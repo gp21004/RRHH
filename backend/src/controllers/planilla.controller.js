@@ -143,6 +143,9 @@ const obtenerHistorial = async (req, res) => {
   try {
     const historial =
       await prisma.planilla.findMany({
+        include: {
+          detalles: true
+        },
         orderBy: {
           fechaGeneracion: 'desc'
         }
@@ -246,11 +249,98 @@ const obtenerDetalleEmpleadoPlanilla = async (req, res) => {
     })
   }
 }
+const obtenerEstadisticasDashboard = async (req, res) => {
+  try {
+
+    const planillas = await prisma.planilla.findMany({
+      include: {
+        detalles: true
+      },  
+      orderBy: {
+        fechaGeneracion: 'desc'
+      }
+    })
+
+    const totalPagado = planillas.reduce((total, planilla) => {
+      return total + planilla.detalles.reduce(
+        (suma, det) => suma + Number(det.salarioLiquido),
+        0
+      )
+    }, 0)
+
+    const totalISSS = planillas.reduce((total, planilla) => {
+      return total + planilla.detalles.reduce(
+        (suma, det) => suma + Number(det.isss),
+        0
+      )
+    }, 0)
+
+    const totalAFP = planillas.reduce((total, planilla) => {
+      return total + planilla.detalles.reduce(
+        (suma, det) => suma + Number(det.afp),
+        0
+      )
+    }, 0)
+
+    const totalRenta = planillas.reduce((total, planilla) => {
+      return total + planilla.detalles.reduce(
+        (suma, det) => suma + Number(det.renta),
+        0
+      )
+    }, 0)
+
+    const ultimaPlanilla = planillas[0]
+
+    let resumenMes = null
+
+    if (ultimaPlanilla) {
+      resumenMes = {
+        mes: ultimaPlanilla.mes,
+        anio: ultimaPlanilla.anio,
+
+        totalPagado: ultimaPlanilla.detalles.reduce(
+          (suma, d) => suma + Number(d.salarioLiquido),
+          0
+        ),
+
+        isss: ultimaPlanilla.detalles.reduce(
+          (suma, d) => suma + Number(d.isss),
+          0
+        ),
+
+        afp: ultimaPlanilla.detalles.reduce(
+          (suma, d) => suma + Number(d.afp),
+          0
+        ),
+
+        renta: ultimaPlanilla.detalles.reduce(
+          (suma, d) => suma + Number(d.renta),
+          0
+        )
+      }
+    }
+
+    res.json({
+      totalPagado,
+      totalISSS,
+      totalAFP,
+      totalRenta,
+      resumenMes
+    })
+
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    })
+  }
+}
+
 
 module.exports = {
   generarPlanillaMensual,
   guardarPlanillaHistorial,
   obtenerHistorial,
   obtenerDetalleHistorial,
-  obtenerDetalleEmpleadoPlanilla
+  obtenerDetalleEmpleadoPlanilla,
+  obtenerEstadisticasDashboard
 };

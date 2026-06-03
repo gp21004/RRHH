@@ -62,7 +62,7 @@
           <q-card-section class="q-pa-sm">
             <div class="flex items-center justify-between">
               <div>
-                <div class="kpi-number">${{ (totalPagos / 1000).toFixed(0) }}k</div>
+                <div class="kpi-number">${{ (totalPagos / 1000).toFixed(2) }}k</div>
                 <div class="kpi-label">Total en Pagos</div>
                 <div class="kpi-change">{{ totalPagos > 0 ? '✓ Calculado' : 'Sin datos' }}</div>
               </div>
@@ -204,13 +204,13 @@
               <div class="col-6">
                 <div class="summary-mini">
                   <div class="summary-label-mini">Total pagado</div>
-                  <div class="summary-value-mini">$28,450</div>
+                  <div class="summary-value-mini">{{ formatMoney(resumenMensual.totalPagado) }}</div>
                 </div>
               </div>
               <div class="col-6">
                 <div class="summary-mini">
                   <div class="summary-label-mini">Descuentos</div>
-                  <div class="summary-value-mini">$6,540</div>
+                  <div class="summary-value-mini">{{ formatMoney(resumenMensual.isss + resumenMensual.afp + resumenMensual.renta) }}</div>
                 </div>
               </div>
             </div>
@@ -222,15 +222,15 @@
               <div class="text-caption text-weight-bold text-grey-7 q-mb-sm">DESGLOSE</div>
               <div class="desglose-item">
                 <span>ISSS</span>
-                <span class="text-weight-bold">$1,920</span>
+                <span class="text-weight-bold">{{ formatMoney(resumenMensual.isss) }}</span>
               </div>
               <div class="desglose-item">
                 <span>AFP</span>
-                <span class="text-weight-bold">$3,840</span>
+                <span class="text-weight-bold">{{ formatMoney(resumenMensual.afp) }}</span>
               </div>
               <div class="desglose-item">
                 <span>Renta</span>
-                <span class="text-weight-bold">$780</span>
+                <span class="text-weight-bold">{{ formatMoney(resumenMensual.renta) }}</span>
               </div>
             </div>
           </q-card-section>
@@ -244,7 +244,7 @@
         <q-card-section class="q-pa-md">
           <div class="flex items-center justify-between q-mb-md">
             <h3 class="text-h6 text-weight-bold text-white q-ma-none">Planillas recientes</h3>
-            <q-btn flat class="bg-accent text-white rounded-borders" label="Ver todas" size="sm" />
+            <q-btn flat class="bg-accent text-white rounded-borders" label="Ver todas" size="sm" @click="$router.push('/historial')" />
           </div>
 
           <q-list separator class="text-white" style="border: none">
@@ -273,21 +273,23 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
-const meses = [
-  { label: 'Mayo 2025', value: 'mayo' },
-  { label: 'Abril 2025', value: 'abril' },
-  { label: 'Marzo 2025', value: 'marzo' }
-]
+const meses = ref([])
 
-const mesSeleccionado = ref('mayo')
+const mesSeleccionado = ref(null)
 
 // Datos que se cargarán desde la API
 const empleadosCount = ref(0)
 const contratosCount = ref(0)
 const totalPagos = ref(0)
 const planillasCount = ref(0)
+const resumenMensual = ref({
+  totalPagado: 0,
+  isss: 0,
+  afp: 0,
+  renta: 0
+})
 const planillasRecientes = ref([])
 const distribucionEmpleados = ref([])
 const loading = ref(true)
@@ -351,13 +353,27 @@ const fechaActual = computed(() => {
   const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
   return hoy.toLocaleDateString('es-ES', opciones)
 })
-
+const formatMoney = (valor) => {
+  return new Intl.NumberFormat(
+    'en-US',
+    {
+      style: 'currency',
+      currency: 'USD'
+    }
+  ).format(valor || 0)
+}
 // Cargar datos desde la API
 const cargarDatos = async () => {
   loading.value = true
   try {
     // Cargar empleados
     const resEmpleados = await fetch('http://localhost:3000/api/empleados')
+    const resStats = await fetch('http://localhost:3000/api/planillas/estadisticas')
+    if (resStats.ok) {
+      const stats = await resStats.json()
+      totalPagos.value = stats.totalPagado
+      resumenMensual.value = stats.resumenMes
+    }
     if (resEmpleados.ok) {
       const empleados = await resEmpleados.json()
       empleadosCount.value = empleados.length
@@ -389,17 +405,35 @@ const cargarDatos = async () => {
       const planillas = await resPlanillas.json()
       planillasCount.value = planillas.length
       
-      // Mostrar últimas 3 planillas
-      planillasRecientes.value = planillas.slice(0, 3).map(p => ({
-        id: p.id,
-        mes: p.mes + ' ' + p.anio,
-        fecha: new Date(p.fechaGeneracion).toLocaleDateString('es-ES'),
-        monto: '$' + (p.detalles?.reduce((sum, d) => sum + d.salarioLiquido, 0) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        status: 'Completada'
+      // Llenar array de meses con datos dinámicos
+      meses.value = planillas.map(p => ({
+        label: `${p.mes} ${p.anio}`,
+        value: p.id
       }))
+
+      // Seleccionar automáticamente la planilla más reciente
+      if (meses.value.length > 0) {
+        mesSeleccionado.value = meses.value[0].value
+        
+        // Cargar automáticamente la primera planilla
+        await cargarResumenPlanilla(meses.value[0].value)
+      }
       
-      // Calcular total pagos de todas las planillas
-      totalPagos.value = planillas.reduce((sum, p) => sum + (p.detalles?.reduce((s, d) => s + d.salarioLiquido, 0) || 0), 0)
+      // Mostrar últimas 3 planillas
+      planillasRecientes.value = planillas.slice(0, 3).map(p => {
+        const totalPlanilla = p.detalles?.reduce(
+          (sum, d) => sum + Number(d.salarioLiquido || 0),
+          0
+        ) || 0
+
+        return {
+          id: p.id,
+          mes: `${p.mes} ${p.anio}`,
+          fecha: new Date(p.fechaGeneracion).toLocaleDateString('es-ES'),
+          monto: formatMoney(totalPlanilla),
+          status: 'Completada'
+        }
+      })
     }
   } catch (error) {
     console.error('Error cargando datos del dashboard:', error)
@@ -408,6 +442,43 @@ const cargarDatos = async () => {
   }
 }
 
+
+const cargarResumenPlanilla = async (planillaId) => {
+  try {
+    const res = await fetch(
+      `http://localhost:3000/api/planillas/historial/${planillaId}`
+    )
+
+    if (!res.ok) return
+
+    const planilla = await res.json()
+
+    resumenMensual.value = {
+      totalPagado: planilla.detalles.reduce(
+        (sum, d) => sum + Number(d.salarioLiquido),
+        0
+      ),
+
+      isss: planilla.detalles.reduce(
+        (sum, d) => sum + Number(d.isss),
+        0
+      ),
+
+      afp: planilla.detalles.reduce(
+        (sum, d) => sum + Number(d.afp),
+        0
+      ),
+
+      renta: planilla.detalles.reduce(
+        (sum, d) => sum + Number(d.renta),
+        0
+      )
+    }
+
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 const getColorDepto = (nombreDepto) => {
   const colores = {
@@ -421,6 +492,12 @@ const getColorDepto = (nombreDepto) => {
   }
   return colores[nombreDepto] || '#9CA3AF'
 }
+
+watch(mesSeleccionado, async (nuevoId) => {
+  if (nuevoId) {
+    await cargarResumenPlanilla(nuevoId)
+  }
+})
 
 onMounted(cargarDatos)
 </script>

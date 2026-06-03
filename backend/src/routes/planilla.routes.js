@@ -8,7 +8,8 @@ const {
     guardarPlanillaHistorial,
     obtenerHistorial,
     obtenerDetalleHistorial,
-    obtenerDetalleEmpleadoPlanilla
+    obtenerDetalleEmpleadoPlanilla,
+    obtenerEstadisticasDashboard
 } = require('../controllers/planilla.controller.js');
 
 /**Y
@@ -18,7 +19,8 @@ const {
 router.get('/generar', generarPlanillaMensual);
 router.get('/historial', obtenerHistorial);
 router.get('/historial/:id', obtenerDetalleHistorial);
-router.get('/:planillaId/empleados/:empleadoId', obtenerDetalleEmpleadoPlanilla)
+router.get('/estadisticas', obtenerEstadisticasDashboard);
+router.get('/:planillaId/empleados/:empleadoId', obtenerDetalleEmpleadoPlanilla);
 /**
  * RUTA: POST /api/planillas/guardar
  * Descripción: Recibe la planilla calculada desde el frontend y la guarda 
