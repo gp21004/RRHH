@@ -118,8 +118,8 @@
             <q-item
               clickable
               v-ripple
-              to="/pagos"
-              :active="$route.path === '/pagos'"
+              to="/gestion-pago"
+              :active="$route.path === '/gestion-pago'"
               active-class="menu-active"
               class="rounded-borders q-mb-sm"
             >

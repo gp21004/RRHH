@@ -22,7 +22,8 @@ const routes = [
       { path: '/planilla/:id', name: 'detalle-planilla', component: () => import('components/DetallePlanilla.vue') }, // Módulo 7
       {path: 'planilla/:planillaId/empleado/:empleadoId', name: 'detalle-empleado-planilla', component: () => import('components/DetalleEmpleadoPlanilla.vue')}, // Módulo 8
       { path: 'perfil', component: () => import('pages/PerfilPage.vue') }, // Perfil de usuario
-      { path: 'configuracion', component: () => import('pages/ConfiguracionPage.vue') } // Configuración
+      { path: 'configuracion', component: () => import('pages/ConfiguracionPage.vue') }, // Configuración
+      {path: 'gestion-pago', component: () => import('pages/GestionPagoPage.vue')}
     ]
   },
 
