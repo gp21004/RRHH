@@ -94,7 +94,7 @@
         diasLaborales,
         periodoPrueba,
         clausulas,
-        estado: 'Activo'
+        estado: 'Borrador'
       }
     })
 
@@ -232,10 +232,96 @@ const actualizarContrato = async (req, res) => {
       })
     }
   }
+  const generarPDFPreview = async (req, res) => {
+  try {
+    const data = req.body
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4' })
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `inline; filename=preview_contrato.pdf`)
+
+    doc.pipe(res)
+
+    doc.fontSize(16).text('CONTRATO DE TRABAJO (BORRADOR)', {
+      align: 'center'
+    })
+
+    doc.moveDown()
+
+    doc.fontSize(10).text(JSON.stringify(data, null, 2))
+
+    doc.end()
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message })
+  }
+}
+const PDFDocument = require('pdfkit')
+const { generarTextoContrato } = require('../services/contratoPdf.service')
+
+const generarContratoPDF = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const contrato = await prisma.contrato.findUnique({
+      where: { id: Number(id) },
+      include: {
+        empleado: {
+          include: {
+            departamento: true
+          }
+        }
+      }
+    })
+
+    if (!contrato) {
+      return res.status(404).json({ message: 'Contrato no encontrado' })
+    }
+
+    const texto = generarTextoContrato(contrato)
+
+    const doc = new PDFDocument({
+      margin: 50,
+      size: 'A4'
+    })
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=contrato_${id}.pdf`
+    )
+
+    doc.pipe(res)
+
+    // TÍTULO
+    doc.fontSize(16).text('CONTRATO DE TRABAJO', {
+      align: 'center'
+    })
+
+    doc.moveDown()
+
+    // TEXTO
+    doc.fontSize(10).text(texto, {
+      align: 'justify',
+      lineGap: 4
+    })
+
+    doc.end()
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message })
+  }
+}
+
 
   module.exports = {
     obtenerContratos,
     crearContrato,
     actualizarContrato,
-    obtenerContratoPorId
+    obtenerContratoPorId,
+    generarContratoPDF,
+    generarPDFPreview
   }

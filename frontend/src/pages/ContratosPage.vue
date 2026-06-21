@@ -269,7 +269,7 @@
                   <q-btn label="Subir Formulario" color="positive" flat />
                 </div>
                 <div class="col-auto" v-if="!editando">
-                  <q-btn label="Generar PDF" color="info" />
+                  <q-btn label="Generar PDF" color="info" @click="generarPDF(contrato.id)"/>
                 </div>
                 <div class="col-auto">
                   <q-btn 
@@ -389,6 +389,17 @@
                 flat 
                 dense 
                 round 
+                icon="picture_as_pdf" 
+                size="sm" 
+                color="info"
+                :loading="descargandoPDF === props.row.id"
+                @click="descargarPDF(props.row.id)"
+                title="Descargar PDF"
+              />
+              <q-btn 
+                flat 
+                dense 
+                round 
                 icon="edit" 
                 size="sm" 
                 color="warning"
@@ -421,6 +432,7 @@ const router = useRouter()
 
 const cargando = ref(true)
 const editando = ref(false)
+const descargandoPDF = ref(null)
 let contratoEnEdicion = null
 
 // Estado del formulario
@@ -481,7 +493,7 @@ const columnasContratos = [
   { name: 'fechaFin', label: 'Fecha Fin', field: 'fechaFin', align: 'center' },
   { name: 'salarioContratado', label: 'Salario', field: 'salarioContratado', align: 'right', sortable: true },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center', sortable: true },
-  { name: 'firma', label: 'Firma', field: 'firma', align: 'center' },
+  { name: 'pdf', label: 'Generar PDF', field: 'pdf', align: 'center' },
   { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ]
 
@@ -813,6 +825,37 @@ const cambiarEstadoContrato = (contrato) => {
   })
 }
 
+// Método para descargar PDF
+const descargarPDF = async (id) => {
+  descargandoPDF.value = id
+  try {
+    const urlPDF = `http://localhost:3000/api/contratos/${id}/pdf`
+    
+    // Crear elemento <a> para descargar
+    const link = document.createElement('a')
+    link.href = urlPDF
+    link.download = `contrato-${id}.pdf`
+    link.click()
+    
+    $q.notify({
+      type: 'positive',
+      message: 'PDF descargado exitosamente',
+      position: 'top',
+      timeout: 2000
+    })
+  } catch (error) {
+    console.error('Error al descargar PDF:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al descargar PDF',
+      position: 'top',
+      timeout: 3000
+    })
+  } finally {
+    descargandoPDF.value = null
+  }
+}
+
 onMounted(async () => {
   await cargarEmpleados()
   await cargarContratos()
@@ -915,6 +958,28 @@ const contratosFiltrados = computed(() => {
     return coincideEmpleado && coincideEstado
   })
 })
+const generarPDF = async () => {
+  const body = {
+    empleado: formulario.value.empleado,
+    cargo: formulario.value.cargo,
+    salario: formulario.value.salarioContratado,
+    horario: formulario.value.horario,
+    clausulas: formulario.value.clausulas
+  }
+
+  const res = await fetch('http://localhost:3000/api/contratos/preview-pdf', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+
+  window.open(url, '_blank')
+}
 </script>
 
 <style scoped>

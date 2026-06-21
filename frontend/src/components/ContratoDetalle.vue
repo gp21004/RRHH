@@ -85,6 +85,15 @@
                 @click="mostrarDialogoEstado = true"
                 unelevated
               />
+              <q-btn
+                color="info"
+                icon="picture_as_pdf"
+                label="Generar PDF"
+                size="md"
+                :loading="descargandoPDF"
+                @click="generarPDF"
+                unelevated
+              />
             </div>
           </div>
 
@@ -277,6 +286,7 @@ const $q = useQuasar()
 const cargando = ref(false)
 const contrato = ref({})
 const mostrarDialogoEstado = ref(false)
+const descargandoPDF = ref(false)
 
 const estadosDisponibles = ['Activo', 'Finalizado', 'Despedido', 'Renuncia', 'Suspendido']
 
@@ -387,6 +397,36 @@ const cambiarEstado = async (nuevoEstado) => {
       message: 'Error al actualizar el estado',
       position: 'top'
     })
+  }
+}
+
+// Método para generar PDF
+const generarPDF = async () => {
+  descargandoPDF.value = true
+  try {
+    const urlPDF = `http://localhost:3000/api/contratos/${contrato.value.id}/pdf`
+    
+    const link = document.createElement('a')
+    link.href = urlPDF
+    link.download = `contrato-${contrato.value.id}.pdf`
+    link.click()
+    
+    $q.notify({
+      type: 'positive',
+      message: 'PDF descargado exitosamente',
+      position: 'top',
+      timeout: 2000
+    })
+  } catch (error) {
+    console.error('Error al descargar PDF:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al descargar PDF',
+      position: 'top',
+      timeout: 3000
+    })
+  } finally {
+    descargandoPDF.value = false
   }
 }
 
