@@ -1,18 +1,14 @@
 <template>
   <div class="login-container">
-    <!-- Animated Background -->
-    <div class="login-bg">
-      <div class="login-bg-circle login-bg-circle--1"></div>
-      <div class="login-bg-circle login-bg-circle--2"></div>
-      <div class="login-bg-circle login-bg-circle--3"></div>
-    </div>
+    <!-- Light Beam Effect -->
+    <div class="light-beam"></div>
 
     <!-- Login Card -->
     <div class="login-card">
       <!-- Header -->
       <div class="login-header">
         <div class="login-logo">
-          <q-icon name="dashboard_customize" size="48px" color="primary" />
+          <q-icon name="dashboard_customize" size="48px" color="white" />
         </div>
         <h1 class="login-title">GestionPro</h1>
         <p class="login-subtitle">Sistema de Recursos Humanos</p>
@@ -24,16 +20,16 @@
           <label class="login-label">Usuario</label>
           <q-input
             v-model="username"
-            outlined
             dense
+            borderless
             placeholder="Ingrese su usuario"
             :rules="[val => !!val || 'El usuario es requerido']"
             lazy-rules
-            dark
+            hide-bottom-space
             class="login-input"
           >
             <template v-slot:prepend>
-              <q-icon name="person_outline" color="grey-5" />
+              <q-icon name="person_outline" size="sm" />
             </template>
           </q-input>
         </div>
@@ -43,22 +39,22 @@
           <q-input
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
-            outlined
             dense
+            borderless
             placeholder="Ingrese su contraseña"
             :rules="[val => !!val || 'La contraseña es requerida']"
             lazy-rules
-            dark
+            hide-bottom-space
             class="login-input"
           >
             <template v-slot:prepend>
-              <q-icon name="lock_outline" color="grey-5" />
+              <q-icon name="lock_outline" size="sm" />
             </template>
             <template v-slot:append>
               <q-icon
                 :name="showPassword ? 'visibility_off' : 'visibility'"
                 class="cursor-pointer"
-                color="grey-5"
+                size="sm"
                 @click="showPassword = !showPassword"
               />
             </template>
@@ -77,14 +73,13 @@
         <q-btn
           type="submit"
           label="Iniciar Sesión"
-          color="primary"
           no-caps
           unelevated
           :loading="loading"
           class="login-btn"
         >
           <template v-slot:loading>
-            <q-spinner-dots size="24px" />
+            <q-spinner-dots size="24px" color="black" />
           </template>
         </q-btn>
       </q-form>
@@ -135,57 +130,22 @@ async function handleLogin() {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: #1a1d23;
+  background: #09090b; /* Very dark background */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* === ANIMATED BACKGROUND === */
-.login-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.login-bg-circle {
+/* Light Beam Effect */
+.light-beam {
   position: absolute;
-  border-radius: 50%;
+  top: -30%;
+  right: -10%;
+  width: 80vw;
+  height: 80vh;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
   filter: blur(80px);
-  opacity: 0.4;
-  animation: float 20s ease-in-out infinite;
-}
-
-.login-bg-circle--1 {
-  width: 500px;
-  height: 500px;
-  background: linear-gradient(135deg, #4a90e2, #357abd);
-  top: -150px;
-  left: -100px;
-  animation-delay: 0s;
-}
-
-.login-bg-circle--2 {
-  width: 400px;
-  height: 400px;
-  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-  bottom: -100px;
-  right: -80px;
-  animation-delay: -7s;
-}
-
-.login-bg-circle--3 {
-  width: 300px;
-  height: 300px;
-  background: linear-gradient(135deg, #00cec9, #55efc4);
-  top: 50%;
-  left: 60%;
-  animation-delay: -14s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(40px, -30px) scale(1.05); }
-  50% { transform: translate(-20px, 40px) scale(0.95); }
-  75% { transform: translate(30px, 20px) scale(1.02); }
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(-20deg);
 }
 
 /* === LOGIN CARD === */
@@ -193,50 +153,42 @@ async function handleLogin() {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
-  padding: 48px 40px;
-  background: rgba(44, 49, 60, 0.85);
+  max-width: 380px;
+  padding: 48px 32px 32px;
+  background: rgba(30, 30, 32, 0.4);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 32px 64px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
   margin: 16px;
 }
 
 /* === HEADER === */
 .login-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .login-logo {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(74, 144, 226, 0.2), rgba(108, 92, 231, 0.2));
-  border-radius: 20px;
-  border: 1px solid rgba(74, 144, 226, 0.3);
+  margin-bottom: 20px;
 }
 
 .login-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: #ffffff;
-  margin: 0 0 4px;
+  margin: 0 0 8px;
   letter-spacing: -0.5px;
 }
 
 .login-subtitle {
-  font-size: 14px;
-  color: #94a3b8;
+  font-size: 13px;
+  color: #a1a1aa;
   margin: 0;
-  font-weight: 400;
 }
 
 /* === FORM === */
@@ -249,39 +201,78 @@ async function handleLogin() {
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .login-label {
   font-size: 13px;
-  font-weight: 600;
-  color: #cbd5e1;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
+  color: #a1a1aa;
+  margin-left: 4px;
 }
 
 .login-input :deep(.q-field__control) {
-  background: rgba(15, 23, 42, 0.5) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
   border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  transition: all 0.3s ease;
+  height: 48px;
+  padding: 0 16px;
+  transition: all 0.2s ease;
+}
+
+.login-input :deep(.q-field__control:before),
+.login-input :deep(.q-field__control:after) {
+  display: none;
 }
 
 .login-input :deep(.q-field__control:hover) {
-  border-color: rgba(74, 144, 226, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
 .login-input :deep(.q-field--focused .q-field__control) {
-  border-color: #4a90e2 !important;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .login-input :deep(.q-field__native) {
-  color: #e2e8f0 !important;
+  color: #ffffff !important;
+  font-size: 14px;
 }
 
 .login-input :deep(.q-field__native::placeholder) {
-  color: #64748b !important;
+  color: #71717a !important;
+}
+
+.login-input :deep(.q-icon) {
+  color: #a1a1aa;
+}
+
+/* Error adjustments */
+.login-input :deep(.q-field__messages) {
+  color: #ef4444;
+  padding-left: 4px;
+  margin-top: 4px;
+}
+
+/* === BUTTON === */
+.login-btn {
+  width: 100%;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #000000 !important;
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  background: #f4f4f5 !important;
+  transform: translateY(-1px);
+}
+
+.login-btn:active {
+  transform: translateY(0);
 }
 
 /* === ERROR === */
@@ -289,12 +280,13 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 12px;
-  color: #fca5a5;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  color: #ef4444;
   font-size: 13px;
+  margin-top: -4px;
 }
 
 .fade-enter-active,
@@ -306,28 +298,6 @@ async function handleLogin() {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
-}
-
-/* === BUTTON === */
-.login-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 12px !important;
-  letter-spacing: 0.3px;
-  background: linear-gradient(135deg, #4a90e2, #357abd) !important;
-  transition: all 0.3s ease;
-  margin-top: 4px;
-}
-
-.login-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(74, 144, 226, 0.35);
-}
-
-.login-btn:active {
-  transform: translateY(0);
 }
 
 /* === FOOTER === */
@@ -344,14 +314,6 @@ async function handleLogin() {
 
 .login-footer-text {
   font-size: 12px;
-  color: #475569;
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 480px) {
-  .login-card {
-    padding: 32px 24px;
-    border-radius: 20px;
-  }
+  color: #71717a;
 }
 </style>
