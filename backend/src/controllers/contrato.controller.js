@@ -1,67 +1,66 @@
-  const { PrismaClient } = require('@prisma/client')
+const { PrismaClient } = require('@prisma/client');
+const PDFDocument = require('pdfkit');
+const { generarContratoPDF } = require('../services/contratoPdf.service');
 
-  const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
-  // OBTENER CONTRATOS
-  const obtenerContratos = async (req, res) => {
-
-    try {
-
-      const contratos = await prisma.contrato.findMany({
-        include: {
-          empleado: true
-        },
-        orderBy: {
-          id: 'desc'
-        }
-      })
-
-      const data = contratos.map(c => {
-        const formatDate = (d) => {
-          if (!d) return ''
-          const dt = new Date(d)
-          return dt.toISOString().split('T')[0]
-        }
-
-        return {
-          id: c.id,
-          empleadoId: c.empleadoId,
-          empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
-          tipoContrato: c.tipoContrato,
-          fechaInicio: formatDate(c.fechaInicio),
-          fechaFin: formatDate(c.fechaFin),
-          salarioContratado: c.salarioContratado,
-          estado: c.estado,
-          cargo: c.cargo,
-          jornada: c.jornada,
-          horario: c.horario,
-          horaInicio: c.horaEntradaEsperada || '',
-          horaFin: c.horaSalidaEsperada || '',
-          diasLaborales: c.diasLaborales,
-          periodoPrueba: c.periodoPrueba,
-          clausulas: c.clausulas,
-          firma: 'PDF'
-        }
-      })
-
-      res.json(data)
-
-    } catch (error) {
-
-      console.error(error)
-
-      res.status(500).json({
-        error: error.message
-      })
-    }
-  }
-
-
-  // CREAR CONTRATO
- const crearContrato = async (req, res) => {
-
+/**
+ * OBTENER TODOS LOS CONTRATOS
+ */
+const obtenerContratos = async (req, res) => {
   try {
+    const contratos = await prisma.contrato.findMany({
+      include: {
+        empleado: true
+      },
+      orderBy: {
+        id: 'desc'
+      }
+    });
 
+    const data = contratos.map(c => {
+      const formatDate = (d) => {
+        if (!d) return '';
+        const dt = new Date(d);
+        return dt.toISOString().split('T')[0];
+      };
+
+      return {
+        id: c.id,
+        empleadoId: c.empleadoId,
+        empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
+        tipoContrato: c.tipoContrato,
+        fechaInicio: formatDate(c.fechaInicio),
+        fechaFin: formatDate(c.fechaFin),
+        salarioContratado: c.salarioContratado,
+        estado: c.estado,
+        cargo: c.cargo,
+        jornada: c.jornada,
+        horario: c.horario,
+        horaInicio: c.horaEntradaEsperada || '',
+        horaFin: c.horaSalidaEsperada || '',
+        diasLaborales: c.diasLaborales,
+        periodoPrueba: c.periodoPrueba,
+        clausulas: c.clausulas,
+        firma: 'PDF'
+      };
+    });
+
+    res.json(data);
+
+  } catch (error) {
+    console.error('Error obteniendo contratos:', error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
+/**
+ * CREAR NUEVO CONTRATO
+ */
+const crearContrato = async (req, res) => {
+  try {
     const {
       empleadoId,
       tipoContrato,
@@ -76,23 +75,23 @@
       diasLaborales,
       periodoPrueba,
       clausulas
-    } = req.body
+    } = req.body;
 
-    // VALIDAR SI YA TIENE CONTRATO ACTIVO
+    // Validar si ya tiene contrato activo
     const contratoActivo = await prisma.contrato.findFirst({
       where: {
         empleadoId: empleadoId,
         estado: 'Activo'
       }
-    })
+    });
 
     if (contratoActivo) {
       return res.status(400).json({
         message: 'El empleado ya tiene un contrato activo'
-      })
+      });
     }
 
-    // CREAR CONTRATO
+    // Crear contrato
     const contrato = await prisma.contrato.create({
       data: {
         empleadoId,
@@ -108,26 +107,24 @@
         clausulas,
         estado: 'Borrador'
       }
-    })
+    });
 
-    res.status(201).json(contrato)
+    res.status(201).json(contrato);
 
   } catch (error) {
-
-    console.error(error)
-
+    console.error('Error creando contrato:', error);
     res.status(500).json({
       error: error.message
-    })
+    });
   }
-}
+};
 
- // ACTUALIZAR CONTRATO
+/**
+ * ACTUALIZAR CONTRATO
+ */
 const actualizarContrato = async (req, res) => {
-
   try {
-
-    const { id } = req.params
+    const { id } = req.params;
 
     const {
       empleadoId,
@@ -144,140 +141,46 @@ const actualizarContrato = async (req, res) => {
       periodoPrueba,
       clausulas,
       estado
-    } = req.body
+    } = req.body;
 
     const contrato = await prisma.contrato.update({
       where: {
         id: Number(id)
       },
-
       data: {
-
-        ...(empleadoId !== undefined && {
-          empleadoId
-        }),
-
-        ...(tipoContrato !== undefined && {
-          tipoContrato
-        }),
-
-        ...(cargo !== undefined && {
-          cargo
-        }),
-
-        ...(fechaInicio !== undefined && {
-          fechaInicio: new Date(fechaInicio)
-        }),
-
+        ...(empleadoId !== undefined && { empleadoId }),
+        ...(tipoContrato !== undefined && { tipoContrato }),
+        ...(cargo !== undefined && { cargo }),
+        ...(fechaInicio !== undefined && { fechaInicio: new Date(fechaInicio) }),
         ...(fechaFin !== undefined && {
-          fechaFin: fechaFin
-            ? new Date(fechaFin)
-            : null
+          fechaFin: fechaFin ? new Date(fechaFin) : null
         }),
-
-        ...(salarioContratado !== undefined && {
-          salarioContratado
-        }),
-
-        ...(horaInicio !== undefined && {
-          horaEntradaEsperada: horaInicio
-        }),
-
-        ...(horaFin !== undefined && {
-          horaSalidaEsperada: horaFin
-        }),
-
-        ...(diasLaborales !== undefined && {
-          diasLaborales
-        }),
-
-        ...(periodoPrueba !== undefined && {
-          periodoPrueba
-        }),
-
-        ...(clausulas !== undefined && {
-          clausulas
-        }),
-
-        ...(estado !== undefined && {
-          estado
-        })
+        ...(salarioContratado !== undefined && { salarioContratado }),
+        ...(horaInicio !== undefined && { horaEntradaEsperada: horaInicio }),
+        ...(horaFin !== undefined && { horaSalidaEsperada: horaFin }),
+        ...(diasLaborales !== undefined && { diasLaborales }),
+        ...(periodoPrueba !== undefined && { periodoPrueba }),
+        ...(clausulas !== undefined && { clausulas }),
+        ...(estado !== undefined && { estado })
       }
-    })
+    });
 
-    res.json(contrato)
+    res.json(contrato);
 
   } catch (error) {
-
-    console.error(error)
-
+    console.error('Error actualizando contrato:', error);
     res.status(500).json({
       error: error.message
-    })
+    });
   }
-}
+};
 
-  // OBTENER UN CONTRATO POR ID
-  const obtenerContratoPorId = async (req, res) => {
-
-    try {
-
-      const { id } = req.params
-
-      const contrato = await prisma.contrato.findUnique({
-        where: { id: Number(id) },
-        include: {
-          empleado: true
-        }
-      })
-
-      if (!contrato) {
-        return res.status(404).json({ error: 'Contrato no encontrado' })
-      }
-
-      res.json(contrato)
-
-    } catch (error) {
-
-      console.error(error)
-
-      res.status(500).json({
-        error: error.message
-      })
-    }
-  }
-  const generarPDFPreview = async (req, res) => {
+/**
+ * OBTENER UN CONTRATO POR ID
+ */
+const obtenerContratoPorId = async (req, res) => {
   try {
-    const data = req.body
-
-    const doc = new PDFDocument({ margin: 50, size: 'A4' })
-
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', `inline; filename=preview_contrato.pdf`)
-
-    doc.pipe(res)
-
-    doc.fontSize(16).text('CONTRATO DE TRABAJO (BORRADOR)', {
-      align: 'center'
-    })
-
-    doc.moveDown()
-
-    doc.fontSize(10).text(JSON.stringify(data, null, 2))
-
-    doc.end()
-
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: error.message })
-  }
-}
-const PDFDocument = require('pdfkit')
-const { generarTextoContrato } = require('../services/contratoPdf.service')
-
-const generarContratoPDF = async (req, res) => {
-  try {
-    const { id } = req.params
+    const { id } = req.params;
 
     const contrato = await prisma.contrato.findUnique({
       where: { id: Number(id) },
@@ -288,54 +191,208 @@ const generarContratoPDF = async (req, res) => {
           }
         }
       }
-    })
+    });
 
     if (!contrato) {
-      return res.status(404).json({ message: 'Contrato no encontrado' })
+      return res.status(404).json({ error: 'Contrato no encontrado' });
     }
 
-    const texto = generarTextoContrato(contrato)
-
-    const doc = new PDFDocument({
-      margin: 50,
-      size: 'A4'
-    })
-
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=contrato_${id}.pdf`
-    )
-
-    doc.pipe(res)
-
-    // TÍTULO
-    doc.fontSize(16).text('CONTRATO DE TRABAJO', {
-      align: 'center'
-    })
-
-    doc.moveDown()
-
-    // TEXTO
-    doc.fontSize(10).text(texto, {
-      align: 'justify',
-      lineGap: 4
-    })
-
-    doc.end()
+    res.json(contrato);
 
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: error.message })
+    console.error('Error obteniendo contrato:', error);
+    res.status(500).json({
+      error: error.message
+    });
   }
-}
+};
 
+/**
+ * GENERAR PDF DEL CONTRATO (VERSIÓN PROFESIONAL)
+ * 
+ * Esta función genera un PDF profesional con formato formal, tabla de datos,
+ * cláusulas bien estructuradas, sección de firmas y marca de agua.
+ */
+const generarContratoPDFDescarga = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  module.exports = {
-    obtenerContratos,
-    crearContrato,
-    actualizarContrato,
-    obtenerContratoPorId,
-    generarContratoPDF,
-    generarPDFPreview
+    // Obtener contrato con datos del empleado y departamento
+    const contrato = await prisma.contrato.findUnique({
+      where: { id: Number(id) },
+      include: {
+        empleado: {
+          include: {
+            departamento: true
+          }
+        }
+      }
+    });
+
+    if (!contrato) {
+      return res.status(404).json({ 
+        message: 'Contrato no encontrado',
+        statusCode: 404 
+      });
+    }
+
+    // Llamar al servicio de generación de PDF profesional
+    await generarContratoPDF(contrato, res);
+
+  } catch (error) {
+    console.error('Error generando PDF del contrato:', error);
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al generar el PDF del contrato'
+    });
   }
+};
+
+/**
+ * GENERAR PDF PREVIEW (Antes de finalizar)
+ * 
+ * Esta función genera un PDF de borrador para previsualización antes de finalizar el contrato.
+ */
+const generarPDFPreview = async (req, res) => {
+  try {
+    const data = req.body;
+
+    const doc = new PDFDocument({ 
+      margin: 50, 
+      size: 'A4',
+      info: {
+        Title: 'Preview Contrato Individual de Trabajo',
+        Author: 'Sistema de Gestión RRHH'
+      }
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=preview_contrato_${new Date().getTime()}.pdf`);
+
+    doc.pipe(res);
+
+    // Encabezado
+    doc.fontSize(16)
+      .font('Helvetica-Bold')
+      .fillColor('#1F2937')
+      .text('CONTRATO DE TRABAJO (BORRADOR)', {
+        align: 'center'
+      });
+
+    doc.moveDown(0.5);
+
+    doc.fontSize(10)
+      .font('Helvetica')
+      .fillColor('#F59E0B')
+      .text('⚠️ Este es un documento de previsualización. No es un documento final.', {
+        align: 'center'
+      });
+
+    doc.moveDown(1);
+
+    // Mostrar datos en formato legible
+    doc.fontSize(10)
+      .font('Helvetica-Bold')
+      .fillColor('#1F2937')
+      .text('DATOS INGRESADOS:', { underline: true });
+
+    doc.moveDown(0.3);
+
+    // Formatear y mostrar los datos del body
+    Object.entries(data).forEach(([key, value]) => {
+      if (value && value !== '') {
+        const label = key.replace(/([A-Z])/g, ' $1').toLowerCase();
+        const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+
+        doc.fontSize(9)
+          .font('Helvetica-Bold')
+          .fillColor('#374151')
+          .text(`${capitalizedLabel}:`, { continued: true });
+
+        doc.font('Helvetica')
+          .fillColor('#4B5563')
+          .text(` ${value}`);
+      }
+    });
+
+    doc.end();
+
+  } catch (error) {
+    console.error('Error generando preview del PDF:', error);
+    res.status(500).json({ 
+      error: error.message,
+      message: 'Error al generar el preview del PDF'
+    });
+  }
+};
+
+/**
+ * ELIMINAR CONTRATO
+ */
+const eliminarContrato = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const contrato = await prisma.contrato.delete({
+      where: {
+        id: Number(id)
+      }
+    });
+
+    res.json({ 
+      message: 'Contrato eliminado exitosamente',
+      contrato 
+    });
+
+  } catch (error) {
+    console.error('Error eliminando contrato:', error);
+    res.status(500).json({
+      error: error.message,
+      message: 'Error al eliminar el contrato'
+    });
+  }
+};
+
+/**
+ * CAMBIAR ESTADO DEL CONTRATO
+ */
+const cambiarEstadoContrato = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    if (!['Borrador', 'Activo', 'Inactivo', 'Finalizado'].includes(estado)) {
+      return res.status(400).json({
+        message: 'Estado inválido. Estados válidos: Borrador, Activo, Inactivo, Finalizado'
+      });
+    }
+
+    const contrato = await prisma.contrato.update({
+      where: { id: Number(id) },
+      data: { estado }
+    });
+
+    res.json({ 
+      message: `Contrato actualizado a estado: ${estado}`,
+      contrato 
+    });
+
+  } catch (error) {
+    console.error('Error cambiando estado del contrato:', error);
+    res.status(500).json({
+      error: error.message,
+      message: 'Error al cambiar el estado del contrato'
+    });
+  }
+};
+
+module.exports = {
+  obtenerContratos,
+  crearContrato,
+  actualizarContrato,
+  obtenerContratoPorId,
+  generarContratoPDFDescarga,
+  generarPDFPreview,
+  eliminarContrato,
+  cambiarEstadoContrato
+};

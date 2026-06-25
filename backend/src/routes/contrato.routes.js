@@ -7,8 +7,7 @@ const {
   crearContrato,
   actualizarContrato,
   obtenerContratoPorId,
-  generarContratoPDF,
-  generarPDFPreview
+  generarContratoPDFDescarga,
 } = require('../controllers/contrato.controller')
 
 router.get('/', obtenerContratos)
@@ -19,8 +18,7 @@ router.post('/', crearContrato)
 
 router.patch('/:id', actualizarContrato)
 
-router.get('/:id/pdf', generarContratoPDF)
+router.get('/:id/pdf', generarContratoPDFDescarga)
 
-router.post('/preview-pdf', generarPDFPreview)
 
 module.exports = router
