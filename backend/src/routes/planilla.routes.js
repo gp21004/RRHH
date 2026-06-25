@@ -9,8 +9,11 @@ const {
     obtenerHistorial,
     obtenerDetalleHistorial,
     obtenerDetalleEmpleadoPlanilla,
-    obtenerEstadisticasDashboard
+    obtenerEstadisticasDashboard,
+    verificarPagos
 } = require('../controllers/planilla.controller.js');
+
+router.get('/verificar/:mes/:anio', verificarPagos);
 
 /**Y
  * Descripción: Toma a los empleados actuales y calcula sus deducciones de ley 

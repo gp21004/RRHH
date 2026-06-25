@@ -87,54 +87,112 @@ const guardarPlanillaHistorial = async (req, res) => {
   const { mes, anio, detalles } = req.body;
 
   try {
-    const planillaExistente =
-      await prisma.planilla.findFirst({
-        where: {
-          mes,
-          anio
-        }
-      });
+    let planilla = await prisma.planilla.findFirst({
+      where: { mes, anio }
+    });
 
-    if (planillaExistente) {
-      return res.status(400).json({
-        error: `La planilla de ${mes} ${anio} ya fue generada`
-      });
-    }
-
-    const nuevaPlanilla =
-      await prisma.planilla.create({
+    if (!planilla) {
+      planilla = await prisma.planilla.create({
         data: {
           mes,
           anio,
           tipo: 'Mensual',
-          estado: 'Pagada',
-
-          detalles: {
-            create: detalles.map((det) => ({
-              empleadoId: det.empleadoId,
-              contratoId: det.contratoId,
-              empleadoNombre: det.empleadoNombre,
-
-              salarioContratado: det.salarioBase,
-
-              isss: det.isss,
-              afp: det.afp,
-              renta: det.renta,
-
-              salarioLiquido: det.salarioLiquido
-            }))
-          }
+          estado: 'Pagada'
         }
       });
+    }
 
-    res.status(201).json(nuevaPlanilla);
+    // Insertar solo los detalles que no existan para este empleado en esta planilla
+    const nuevosDetalles = [];
+    for (const det of detalles) {
+      const existe = await prisma.detallePlanilla.findFirst({
+        where: {
+          planillaId: planilla.id,
+          empleadoId: det.empleadoId
+        }
+      });
+      if (!existe) {
+        // Resolver el contratoId: buscar el contrato vigente si no viene o viene inválido
+        let contratoId = (det.contratoId && det.contratoId > 0) ? det.contratoId : null
+
+        if (!contratoId) {
+          const contrato = await prisma.contrato.findFirst({
+            where: {
+              empleadoId: det.empleadoId,
+              estado: { in: ['Vigente', 'Activo'] }
+            },
+            orderBy: { fechaInicio: 'desc' }
+          })
+          if (!contrato) {
+            // Último recurso: cualquier contrato del empleado
+            const cualquierContrato = await prisma.contrato.findFirst({
+              where: { empleadoId: det.empleadoId },
+              orderBy: { fechaInicio: 'desc' }
+            })
+            contratoId = cualquierContrato?.id
+          } else {
+            contratoId = contrato.id
+          }
+        }
+
+        if (!contratoId) {
+          console.warn(`No se encontró contrato para empleadoId ${det.empleadoId}, omitiendo`)
+          continue
+        }
+
+        nuevosDetalles.push({
+          planillaId: planilla.id,
+          empleadoId: det.empleadoId,
+          contratoId,
+          empleadoNombre: det.empleadoNombre,
+          salarioContratado: det.salarioBase,
+          isss: det.isss,
+          afp: det.afp,
+          renta: det.renta,
+          salarioLiquido: det.salarioLiquido
+        });
+      }
+    }
+
+    if (nuevosDetalles.length > 0) {
+      await prisma.detallePlanilla.createMany({
+        data: nuevosDetalles
+      });
+    }
+
+    res.status(201).json({ message: 'Planilla actualizada exitosamente', planilla });
 
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: 'Error al guardar el historial' });
+  }
+};
 
-    res.status(500).json({
-      error: 'Error al guardar el historial'
+const verificarPagos = async (req, res) => {
+  try {
+    const { mes, anio } = req.params;
+    const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    
+    // Si mes llega como número (ej: "6"), convertirlo a nombre ("Junio")
+    const mesNumero = parseInt(mes)
+    const mesNombre = (mesNumero >= 1 && mesNumero <= 12) 
+      ? mesesNombres[mesNumero - 1] 
+      : mes  // Si ya viene como texto, usarlo directamente
+
+    const planilla = await prisma.planilla.findFirst({
+      where: { mes: mesNombre, anio: parseInt(anio) },
+      include: { detalles: true }
     });
+
+    if (!planilla) {
+      return res.json([]);
+    }
+
+    const empleadosPagados = planilla.detalles.map(d => d.empleadoId);
+    res.json(empleadosPagados);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al verificar pagos' });
   }
 };
 
@@ -342,5 +400,6 @@ module.exports = {
   obtenerHistorial,
   obtenerDetalleHistorial,
   obtenerDetalleEmpleadoPlanilla,
-  obtenerEstadisticasDashboard
+  obtenerEstadisticasDashboard,
+  verificarPagos
 };

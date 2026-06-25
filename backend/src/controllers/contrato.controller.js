@@ -16,23 +16,33 @@
         }
       })
 
-      const data = contratos.map(c => ({
-        id: c.id,
-        empleadoId: c.empleadoId,
-        empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
-        tipoContrato: c.tipoContrato,
-        fechaInicio: c.fechaInicio,
-        fechaFin: c.fechaFin || '',
-        salarioContratado: c.salarioContratado,
-        estado: c.estado,
-        cargo: c.cargo,
-        jornada: c.jornada,
-        horario: c.horario,
-        diasLaborales: c.diasLaborales,
-        periodoPrueba: c.periodoPrueba,
-        clausulas: c.clausulas,
-        firma: 'PDF'
-      }))
+      const data = contratos.map(c => {
+        const formatDate = (d) => {
+          if (!d) return ''
+          const dt = new Date(d)
+          return dt.toISOString().split('T')[0]
+        }
+
+        return {
+          id: c.id,
+          empleadoId: c.empleadoId,
+          empleado: `${c.empleado.nombres} ${c.empleado.apellidos}`,
+          tipoContrato: c.tipoContrato,
+          fechaInicio: formatDate(c.fechaInicio),
+          fechaFin: formatDate(c.fechaFin),
+          salarioContratado: c.salarioContratado,
+          estado: c.estado,
+          cargo: c.cargo,
+          jornada: c.jornada,
+          horario: c.horario,
+          horaInicio: c.horaEntradaEsperada || '',
+          horaFin: c.horaSalidaEsperada || '',
+          diasLaborales: c.diasLaborales,
+          periodoPrueba: c.periodoPrueba,
+          clausulas: c.clausulas,
+          firma: 'PDF'
+        }
+      })
 
       res.json(data)
 
@@ -61,6 +71,8 @@
       salarioContratado,
       jornada,
       horario,
+      horaInicio,
+      horaFin,
       diasLaborales,
       periodoPrueba,
       clausulas
@@ -89,8 +101,8 @@
         fechaInicio: new Date(fechaInicio),
         fechaFin: fechaFin ? new Date(fechaFin) : null,
         salarioContratado,
-        jornada,
-        horario,
+        horaEntradaEsperada: horaInicio || '08:00',
+        horaSalidaEsperada: horaFin || '17:00',
         diasLaborales,
         periodoPrueba,
         clausulas,
@@ -126,6 +138,8 @@ const actualizarContrato = async (req, res) => {
       salarioContratado,
       jornada,
       horario,
+      horaInicio,
+      horaFin,
       diasLaborales,
       periodoPrueba,
       clausulas,
@@ -165,12 +179,12 @@ const actualizarContrato = async (req, res) => {
           salarioContratado
         }),
 
-        ...(jornada !== undefined && {
-          jornada
+        ...(horaInicio !== undefined && {
+          horaEntradaEsperada: horaInicio
         }),
 
-        ...(horario !== undefined && {
-          horario
+        ...(horaFin !== undefined && {
+          horaSalidaEsperada: horaFin
         }),
 
         ...(diasLaborales !== undefined && {

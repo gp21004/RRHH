@@ -15,6 +15,7 @@ const crearEmpleado = async (req, res) => {
       nit,
       nup_afp,
       fechaNacimiento,
+      fechaIngreso,
       departamentoId,
       telefono,
       correo,
@@ -33,6 +34,10 @@ const crearEmpleado = async (req, res) => {
         fechaNacimiento: fechaNacimiento
           ? new Date(fechaNacimiento + 'T00:00:00')
           : null,
+
+        fechaIngreso: fechaIngreso
+          ? new Date(fechaIngreso + 'T00:00:00')
+          : undefined,
 
         telefono: telefono || null,
         correo: correo || null,
@@ -71,7 +76,10 @@ const obtenerEmpleados = async (req, res) => {
   try {
     const empleados = await prisma.empleado.findMany({
       include: {
-        departamento: true
+        departamento: true,
+        contratos: {
+          where: { estado: 'Activo' }
+        }
       }
     })
 
@@ -133,6 +141,7 @@ const actualizarEmpleado = async (req, res) => {
       nup_afp,
       departamentoId,
       fechaNacimiento,
+      fechaIngreso,
       telefono,
       correo,
       estado
@@ -154,6 +163,10 @@ const empleadoActualizado = await prisma.empleado.update({
     fechaNacimiento: fechaNacimiento
       ? new Date(fechaNacimiento + 'T00:00:00')
       : null,
+
+    ...(fechaIngreso !== undefined && {
+      fechaIngreso: new Date(fechaIngreso + 'T00:00:00')
+    }),
 
     telefono: telefono || null,
     correo: correo || null,

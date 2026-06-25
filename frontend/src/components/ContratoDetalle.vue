@@ -173,13 +173,7 @@
               <span class="info-value">${{ formatSalario(contrato.salarioContratado) }}</span>
             </div>
 
-            <div class="info-item">
-              <div class="info-label">
-                <q-icon name="schedule" size="sm" class="text-warning q-mr-sm" />
-                <span class="label">Jornada Semanal:</span>
-              </div>
-              <span class="info-value">{{ contrato.jornada || 'No registrada' }}</span>
-            </div>
+
 
             <div class="info-item">
               <div class="info-label">
@@ -208,7 +202,7 @@
                     <q-icon name="schedule" size="sm" class="text-secondary q-mr-sm" />
                     <span class="label">Horario:</span>
                   </div>
-                  <span class="info-value">{{ contrato.horario || 'No registrado' }}</span>
+                  <span class="info-value">{{ (contrato.horaEntradaEsperada && contrato.horaSalidaEsperada) ? `${contrato.horaEntradaEsperada} - ${contrato.horaSalidaEsperada}` : 'No registrado' }}</span>
                 </div>
               </div>
 
@@ -218,7 +212,7 @@
                     <q-icon name="calendar_month" size="sm" class="text-secondary q-mr-sm" />
                     <span class="label">Días Laborales:</span>
                   </div>
-                  <span class="info-value">{{ contrato.diasLaborales || 'No registrados' }}</span>
+                  <span class="info-value">{{ parsearDiasLaborales(contrato.diasLaborales) }}</span>
                 </div>
               </div>
             </div>
@@ -348,6 +342,16 @@ const formatearFecha = (fecha) => {
 const formatSalario = (valor) => {
   if (!valor) return '0.00'
   return parseFloat(valor).toFixed(2)
+}
+
+const parsearDiasLaborales = (dias) => {
+  if (!dias) return 'No registrados'
+  try {
+    const arr = JSON.parse(dias)
+    return Array.isArray(arr) ? arr.join(', ') : dias
+  } catch {
+    return dias
+  }
 }
 
 const editarContrato = () => {

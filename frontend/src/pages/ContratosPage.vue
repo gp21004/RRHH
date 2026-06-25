@@ -1,5 +1,4 @@
 <template>
-  <!-- LOADER MIENTRAS CARGA -->
   <div v-if="cargando" class="loading-page">
     <div class="spinner-wrapper">
       <q-spinner
@@ -13,22 +12,18 @@
   </div>
 
   <q-page padding v-else>
-    <!-- Header -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
         <q-btn flat icon="arrow_back" label="Volver al inicio" color="primary" class="text-weight-bold" to="/" />
       </div>
     </div>
 
-    <!-- Título y Descripción -->
     <div class="q-mb-lg">
       <h1 class="text-h4 text-weight-bold q-ma-none q-mb-xs">Gestión de Contratos</h1>
       <p class="text-subtitle2 text-grey-7 q-ma-none">Administra los contratos laborales y documentos legales de los empleados.</p>
     </div>
 
-    <!-- Estadísticas Cards - Grid compacto -->
     <div class="stats-grid q-mb-lg">
-      <!-- Contratos Activos -->
       <q-card class="stat-card">
         <q-card-section class="q-pa-sm">
           <div class="flex items-center" style="gap: 12px;">
@@ -44,7 +39,6 @@
         </q-card-section>
       </q-card>
 
-      <!-- Pendientes de Firma -->
       <q-card class="stat-card">
         <q-card-section class="q-pa-sm">
           <div class="flex items-center" style="gap: 12px;">
@@ -60,7 +54,6 @@
         </q-card-section>
       </q-card>
 
-      <!-- Finalizados -->
       <q-card class="stat-card">
         <q-card-section class="q-pa-sm">
           <div class="flex items-center" style="gap: 12px;">
@@ -76,7 +69,6 @@
         </q-card-section>
       </q-card>
 
-      <!-- Por Vencer -->
       <q-card class="stat-card">
         <q-card-section class="q-pa-sm">
           <div class="flex items-center" style="gap: 12px;">
@@ -93,7 +85,6 @@
       </q-card>
     </div>
 
-    <!-- Nuevo Contrato Form -->
     <div class="q-mb-lg">
       <div class="row items-center justify-between q-mb-md">
         <div>
@@ -109,7 +100,6 @@
       <q-card class="form-card">
         <q-card-section class="q-pa-lg">
           <q-form @submit.prevent="editando ? actualizarContrato() : guardarContrato()" class="form-content">
-            <!-- Sección 1: Datos del Empleado -->
             <div>
               <div class="section-header q-mb-md">
                 <q-icon name="person" color="primary" size="24px" />
@@ -138,10 +128,8 @@
               </div>
             </div>
 
-            <!-- Separador -->
             <q-separator />
 
-            <!-- Sección 2: Condiciones del Contrato -->
             <div>
               <div class="section-header q-mb-md">
                 <q-icon name="contract" color="primary" size="24px" />
@@ -156,7 +144,7 @@
                   <q-input outlined dense v-model="formulario.cargo" label="Cargo / Puesto *" required />
                 </div>
                 <div class="col-12 col-md-6">
-                  <q-input outlined dense v-model="formulario.fechaInicio" type="date" label="Fecha de Inicio *" required />
+                  <q-input outlined dense v-model="formulario.fechaInicio" type="date" label="Fecha de Inicio *" max="9999-12-31" required />
                 </div>
                 <div class="col-12 col-md-6">
                   <q-input 
@@ -165,6 +153,7 @@
                     v-model="formulario.fechaFin" 
                     type="date" 
                     label="Fecha de Fin"
+                    max="9999-12-31"
                     :disable="formulario.tipoContrato === 'Por tiempo indefinido'"
                     hint="No aplica para contratos indefinidos"
                   />
@@ -222,10 +211,8 @@
               </div>
             </div>
 
-            <!-- Separador -->
             <q-separator />
 
-            <!-- Sección 3: Cláusulas Adicionales -->
             <div>
               <div class="section-header q-mb-md">
                 <q-icon name="note" color="primary" size="24px" />
@@ -247,7 +234,6 @@
               </div>
             </div>
 
-            <!-- Botones -->
             <div class="buttons-section">
               <div class="row q-col-gutter-md">
                 <div class="col-auto">
@@ -285,12 +271,10 @@
       </q-card>
     </div>
 
-    <!-- Contratos Registrados -->
     <div class="q-mb-md">
       <h2 class="text-h6 text-weight-bold q-ma-none q-mb-md">Contratos Registrados</h2>
     </div>
 
-    <!-- Filtros -->
     <q-card class="filtros-card q-mb-md">
       <q-card-section class="q-pa-md">
         <div class="row q-col-gutter-md items-center">
@@ -318,7 +302,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- Tabla de Contratos -->
     <q-card class="table-card">
       <q-table 
         :rows="contratosFiltrados" 
@@ -329,16 +312,17 @@
         no-data-label="No se encontraron contratos"
         class="contratos-table"
       >
-        <!-- Columna Empleado con Avatar -->
         <template #body-cell-empleado="props">
           <q-td :props="props" class="empleado-cell">
             <div class="flex items-center" style="gap: 12px;">
               <q-avatar 
-                :label="getInitials(props.row.empleado)" 
-                :style="{ backgroundColor: getAvatarColor(props.row.id) }"
-                text-color="white"
                 size="md"
-              />
+                text-color="white"
+                :style="{ backgroundColor: getAvatarColor(props.row.empleado) }"
+                class="text-weight-bold"
+              >
+                {{ getInitials(props.row.empleado) }}
+              </q-avatar>
               <div style="flex: 1;">
                 <div class="text-weight-bold" style="color: #e5e7eb;">{{ props.row.empleado }}</div>
                 <div class="text-caption" style="color: #9ca3af;">{{ props.row.tipoContrato }}</div>
@@ -347,7 +331,6 @@
           </q-td>
         </template>
 
-        <!-- Columna Estado -->
         <template #body-cell-estado="props">
           <q-td :props="props">
             <q-badge 
@@ -358,21 +341,18 @@
           </q-td>
         </template>
 
-        <!-- Columna Fecha Fin -->
         <template #body-cell-fechaFin="props">
           <q-td :props="props">
             <span style="color: #e5e7eb;">{{ props.row.fechaFin || 'Indefinido' }}</span>
           </q-td>
         </template>
 
-        <!-- Columna Salario -->
         <template #body-cell-salarioContratado="props">
           <q-td :props="props">
             <span style="color: #e5e7eb; font-weight: bold;">${{ parseFloat(props.row.salarioContratado).toFixed(2) }}</span>
           </q-td>
         </template>
 
-        <!-- Columna Acciones -->
         <template #body-cell-acciones="props">
           <q-td :props="props" class="acciones-cell">
             <div class="flex items-center justify-center" style="gap: 4px;">
@@ -499,16 +479,36 @@ const columnasContratos = [
 
 // Funciones Helper
 const getInitials = (nombre) => {
-  return nombre
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join('')
+  if (!nombre) return '?'
+  const partes = nombre.trim().split(/\s+/)
+  if (partes.length === 1) return partes[0].charAt(0).toUpperCase()
+  const primerNombre = partes[0].charAt(0).toUpperCase()
+  const indiceApellido = partes.length >= 3 ? 2 : 1
+  const primerApellido = partes[indiceApellido].charAt(0).toUpperCase()
+  return primerNombre + primerApellido
 }
 
-const getAvatarColor = (id) => {
-  const colors = ['#2563eb', '#16a34a', '#dc2626', '#ea580c', '#9333ea', '#0891b2']
-  return colors[id % colors.length]
+// NUEVA FUNCIÓN IGUAL A LAS OTRAS PAGES
+const getAvatarColor = (nombre) => {
+  if (!nombre) return '#3b82f6'
+  
+  let hash = 0
+  for (let i = 0; i < nombre.length; i++) {
+    hash = nombre.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  
+  const colors = [
+    '#3b82f6',
+    '#10b981',
+    '#8b5cf6',
+    '#f97316',
+    '#ef4444',
+    '#06b6d4',
+    '#ec4899'
+  ]
+  
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 }
 
 const getEstadoColor = (estado) => {
@@ -630,6 +630,8 @@ const guardarContrato = async () => {
       salarioContratado: parseFloat(formulario.value.salarioContratado),
       jornada: formulario.value.jornada,
       horario: horario,
+      horaInicio: formulario.value.horaInicio,
+      horaFin: formulario.value.horaFin,
       diasLaborales: formulario.value.diasLaborales.join(', '),
       periodoPrueba: formulario.value.periodoPrueba,
       clausulas: formulario.value.clausulas
@@ -725,6 +727,8 @@ const actualizarContrato = async () => {
       salarioContratado: parseFloat(formulario.value.salarioContratado),
       jornada: formulario.value.jornada,
       horario: horario,
+      horaInicio: formulario.value.horaInicio,
+      horaFin: formulario.value.horaFin,
       diasLaborales: formulario.value.diasLaborales.join(', '),
       periodoPrueba: formulario.value.periodoPrueba,
       clausulas: formulario.value.clausulas
@@ -734,7 +738,7 @@ const actualizarContrato = async () => {
     console.log('[v0] Datos enviados:', body)
 
     const res = await fetch(`http://localhost:3000/api/contratos/${contratoEnEdicion.id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -1210,7 +1214,7 @@ const generarPDF = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 48px); /* Full viewport height minus header/footer if any */
+  min-height: calc(100vh - 48px);
   padding: 40px;
   width: 100%;
 }

@@ -1,5 +1,4 @@
 <template>
-  <!-- LOADER MIENTRAS CARGA -->
   <div v-if="cargando" class="loading-page">
     <div class="spinner-wrapper">
       <q-spinner
@@ -14,7 +13,6 @@
 
   <q-page padding v-else>
 
-    <!-- Header -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
         <q-btn
@@ -28,7 +26,6 @@
       </div>
     </div>
 
-    <!-- TITULO -->
     <div class="q-mb-lg">
       <div class="row items-center justify-between">
 
@@ -60,7 +57,6 @@
       </div>
     </div>
 
-    <!-- FORMULARIO -->
     <q-card class="q-mb-lg form-card">
 
       <q-card-section class="q-pa-lg">
@@ -73,12 +69,10 @@
           "
         >
 
-          <!-- INFORMACION PERSONAL -->
           <div class="text-subtitle2 text-weight-bold q-mb-lg">
             Información Personal
           </div>
 
-          <!-- FILA 1 -->
           <div class="row q-col-gutter-lg q-mb-lg">
 
             <div class="col-12 col-sm-4">
@@ -114,7 +108,6 @@
 
           </div>
 
-          <!-- FILA 2 -->
           <div class="row q-col-gutter-lg q-mb-lg">
 
             <div class="col-12 col-sm-4">
@@ -142,13 +135,24 @@
                 v-model="empleado.fechaNacimiento"
                 label="Fecha de Nacimiento"
                 type="date"
+                max="9999-12-31"
+                class="form-input"
+              />
+            </div>
+
+            <div class="col-12 col-sm-4">
+              <q-input
+                outlined
+                v-model="empleado.fechaIngreso"
+                label="Fecha de Ingreso"
+                type="date"
+                max="9999-12-31"
                 class="form-input"
               />
             </div>
 
           </div>
 
-          <!-- FILA 3 -->
           <div class="row q-col-gutter-lg q-mb-lg">
 
 
@@ -170,7 +174,6 @@
 
           </div>
 
-          <!-- FILA 4 -->
           <div class="row q-col-gutter-lg q-mb-lg">
 
             <div class="col-12 col-sm-6">
@@ -196,7 +199,6 @@
 
           </div>
 
-          <!-- ACTIVO -->
           <div class="q-mb-lg">
             <q-toggle
               v-model="empleado.estado"
@@ -205,7 +207,6 @@
             />
           </div>
 
-          <!-- BOTONES -->
           <div class="row q-col-gutter-md">
 
             <div class="col-auto">
@@ -261,21 +262,18 @@
 
     </q-card>
 
-    <!-- LISTADO -->
     <div class="q-mb-md">
       <h2 class="text-h6 text-weight-bold q-ma-none">
         Listado de Empleados
       </h2>
     </div>
 
-    <!-- FILTROS -->
     <q-card class="q-mb-md filtros-card">
 
       <q-card-section class="q-pa-md">
 
         <div class="row q-col-gutter-md items-center">
 
-          <!-- BUSQUEDA -->
           <div class="col-12 col-sm-4">
             <q-input
               outlined
@@ -286,7 +284,6 @@
             />
           </div>
 
-          <!-- DEPARTAMENTO -->
           <div class="col-12 col-sm-4">
             <q-select
               outlined
@@ -302,7 +299,6 @@
             />
           </div>
 
-          <!-- ESTADO -->
           <div class="col-12 col-sm-4">
          <q-select
             outlined
@@ -324,7 +320,6 @@
 
     </q-card>
 
-    <!-- TABLA -->
     <q-card class="table-card">
 
       <q-table
@@ -337,7 +332,6 @@
         class="employees-table"
       >
 
-        <!-- EMPLEADO -->
         <template #body-cell-empleado="props">
 
           <q-td :props="props" class="empleado-cell">
@@ -348,12 +342,10 @@
             >
 
               <q-avatar
-                :style="{
-                  backgroundColor: getAvatarColor(props.row.id),
-                  color: '#ffffff',
-                  fontWeight: '700'
-                }"
-                size="40px"
+                size="md"
+                text-color="white"
+                :style="{ backgroundColor: getAvatarColor(props.row.nombres, props.row.apellidos) }"
+                class="text-weight-bold"
               >
                 {{ getInitials(props.row.nombres, props.row.apellidos) }}
               </q-avatar>
@@ -376,7 +368,6 @@
 
         </template>
 
-        <!-- CONTACTO -->
         <template #body-cell-contacto="props">
 
           <q-td :props="props" class="contacto-cell">
@@ -406,7 +397,6 @@
 
         </template>
 
-        <!-- ACCIONES -->
         <template #body-cell-acciones="props">
 
           <q-td :props="props" class="acciones-cell">
@@ -456,7 +446,6 @@
 
     </q-card>
 
-    <!-- DIALOGO DEPARTAMENTO -->
     <q-dialog v-model="mostrarDialogoDepto">
 
       <q-card style="min-width: 400px">
@@ -551,6 +540,7 @@ const editando = ref(false)
     nit: '',
     nup_afp: '',
     fechaNacimiento: '',
+    fechaIngreso: '',
     departamentoId: null,
     telefono: '',
     correo: '',
@@ -654,28 +644,32 @@ const columnasEmpleados = [
 ]
 
 const getInitials = (nombres, apellidos) => {
-  const n = nombres
-    ? nombres.charAt(0).toUpperCase()
-    : ''
-
-  const a = apellidos
-    ? apellidos.charAt(0).toUpperCase()
-    : ''
-
-  return (n + a) || '?'
+  const primerNombre = nombres ? nombres.trim().split(/\s+/)[0].charAt(0).toUpperCase() : ''
+  const primerApellido = apellidos ? apellidos.trim().split(/\s+/)[0].charAt(0).toUpperCase() : ''
+  return (primerNombre + primerApellido) || '?'
 }
 
-const getAvatarColor = (id) => {
+const getAvatarColor = (nombres, apellidos) => {
+  const fullName = `${nombres || ''} ${apellidos || ''}`.trim()
+  if (!fullName) return '#3b82f6'
+  
+  let hash = 0
+  for (let i = 0; i < fullName.length; i++) {
+    hash = fullName.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  
   const colors = [
-    '#2563eb',
-    '#16a34a',
-    '#dc2626',
-    '#ea580c',
-    '#9333ea',
-    '#0891b2'
+    '#3b82f6',
+    '#10b981',
+    '#8b5cf6',
+    '#f97316',
+    '#ef4444',
+    '#06b6d4',
+    '#ec4899'
   ]
-
-  return colors[Math.abs(id || 0) % colors.length]
+  
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 }
 
 const cargarDepartamentos = async () => {
@@ -798,6 +792,7 @@ const crearEmpleadoAPI = async (datosEmpleado) => {
       nit: datosEmpleado.nit,
       nup_afp: datosEmpleado.nup_afp,
       fechaNacimiento: datosEmpleado.fechaNacimiento || null,
+      fechaIngreso: datosEmpleado.fechaIngreso || undefined,
       departamentoId: datosEmpleado.departamentoId,
       telefono: datosEmpleado.telefono,
       correo: datosEmpleado.correo,
@@ -864,6 +859,9 @@ const editarEmpleado = (emp) => {
     fechaNacimiento: emp.fechaNacimiento
       ? emp.fechaNacimiento.split('T')[0]
       : '',
+    fechaIngreso: emp.fechaIngreso
+      ? emp.fechaIngreso.split('T')[0]
+      : '',
     departamentoId: emp.departamentoId || null,
     telefono: emp.telefono || '',
     correo: emp.correo || '',
@@ -889,6 +887,7 @@ const actualizarEmpleado = async () => {
       nit: empleado.value.nit,
       nup_afp: empleado.value.nup_afp,
       fechaNacimiento: empleado.value.fechaNacimiento || null,
+      fechaIngreso: empleado.value.fechaIngreso || undefined,
       departamentoId: empleado.value.departamentoId,
       telefono: empleado.value.telefono,
       correo: empleado.value.correo,

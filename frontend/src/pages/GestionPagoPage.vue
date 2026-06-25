@@ -1,5 +1,4 @@
 <template>
-  <!-- LOADER MIENTRAS CARGA -->
   <div v-if="cargando" class="loading-page">
     <div class="spinner-wrapper">
       <q-spinner
@@ -13,20 +12,17 @@
   </div>
 
   <q-page padding v-else>
-    <!-- Header -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
         <q-btn flat icon="arrow_back" label="Volver al inicio" color="primary" class="text-weight-bold" to="/" />
       </div>
     </div>
 
-    <!-- Título y Descripción -->
     <div class="q-mb-lg">
       <h1 class="text-h4 text-weight-bold q-ma-none q-mb-xs">Gestión de Pagos</h1>
       <p class="text-subtitle2 text-grey-7 q-ma-none">Administra los pagos, novedades y ajustes antes de generar la planilla.</p>
     </div>
 
-    <!-- Período de Pago -->
     <div class="row items-center justify-end q-mb-lg">
       <div class="col-12 col-md-3">
         <div class="text-subtitle2 text-weight-bold q-mb-sm" style="color: #e5e7eb;">Período de Pago</div>
@@ -42,7 +38,6 @@
       </div>
     </div>
 
-    <!-- Estadísticas Cards -->
     <div class="stats-grid q-mb-lg">
       <q-card class="stat-card">
         <q-card-section class="q-pa-sm">
@@ -87,7 +82,6 @@
       </q-card>
     </div>
 
-    <!-- Pasos del Proceso -->
     <div class="steps-container q-mb-lg">
       <div 
         v-for="(step, index) in steps" 
@@ -112,7 +106,6 @@
       </div>
     </div>
 
-    <!-- PASO 1: SELECCIONAR EMPLEADOS -->
     <div v-if="pasoActual === 0" class="paso-content">
       <q-card class="form-card">
         <q-card-section class="q-pa-lg">
@@ -121,7 +114,6 @@
             <span class="q-ml-md text-subtitle2 text-weight-bold">1. Seleccionar Empleados</span>
           </div>
 
-          <!-- Búsqueda y Filtro -->
           <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-6">
               <q-input 
@@ -133,7 +125,7 @@
                 clearable
               />
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-4">
               <q-select 
                 outlined 
                 dense
@@ -145,9 +137,19 @@
                 map-options
               />
             </div>
+            <div class="col-12 col-md-4">
+              <q-select 
+                outlined 
+                dense
+                v-model="estadoPagoFiltro" 
+                :options="['Pendientes de pago', 'Pagos finalizados']"
+                label="Estado de Pago"
+                emit-value
+                map-options
+              />
+            </div>
           </div>
 
-          <!-- Tabla de Empleados -->
           <q-table 
             :rows="empleadosFiltrados" 
             :columns="columnasEmpleados" 
@@ -176,18 +178,20 @@
             </template>
 
             <template #body-cell-empleado="props">
-              <q-td :props="props" class="empleado-cell">
-                <div class="flex items-center" style="gap: 12px;">
+              <q-td :props="props">
+                <div class="row items-center q-gutter-x-sm">
+                  
                   <q-avatar 
-                    :label="getInitials(props.row.nombre)" 
-                    :style="{ backgroundColor: getAvatarColor(props.row.id) }"
-                    text-color="white"
-                    size="md"
-                  />
-                  <div style="flex: 1;">
-                    <div class="text-weight-bold" style="color: #e5e7eb;">{{ props.row.nombre }}</div>
-                    <div class="text-caption" style="color: #9ca3af;">{{ props.row.dui }}</div>
-                  </div>
+                    size="md" 
+                    text-color="white" 
+                    :style="{ backgroundColor: getAvatarColor(props.row.nombre) }"
+                    class="text-weight-bold"
+                  >
+                    {{ getInitials(props.row.nombre) }}
+                  </q-avatar>
+
+                  <span class="q-ml-sm text-white">{{ props.row.nombre }}</span>
+
                 </div>
               </q-td>
             </template>
@@ -216,7 +220,7 @@
                 <q-btn 
                   label="Siguiente" 
                   color="primary"
-                  @click="pasoActual = 1"
+                  @click="irAPaso2"
                   :disable="empleadosSeleccionados.length === 0"
                   icon-right="arrow_forward"
                 />
@@ -227,7 +231,6 @@
       </q-card>
     </div>
 
-    <!-- PASO 2: REGISTRAR NOVEDADES -->
     <div v-if="pasoActual === 1" class="paso-content">
       <q-card class="form-card">
         <q-card-section class="q-pa-lg">
@@ -311,14 +314,26 @@
                   prefix="$"
                 />
               </div>
+              <div class="col-12" v-if="requiereJustificante">
+                <q-input 
+                  outlined 
+                  dense
+                  v-model="formularioNovedades.justificante" 
+                  type="textarea"
+                  label="Justificante de modificación (Requerido)"
+                  rows="2"
+                  color="warning"
+                  :rules="[val => !!val || 'El justificante es obligatorio al modificar cálculos automáticos']"
+                />
+              </div>
               <div class="col-12">
                 <q-input 
                   outlined 
                   dense
                   v-model="formularioNovedades.observaciones" 
                   type="textarea"
-                  label="Observaciones"
-                  rows="3"
+                  label="Observaciones Generales"
+                  rows="2"
                 />
               </div>
             </div>
@@ -333,7 +348,7 @@
                   <q-btn label="Anterior" color="grey-7" flat @click="pasoActual = 0" />
                 </div>
                 <div class="col-auto">
-                  <q-btn label="Siguiente" color="primary" @click="pasoActual = 2" icon-right="arrow_forward" />
+                  <q-btn label="Siguiente" color="primary" @click="irAPaso3" icon-right="arrow_forward" />
                 </div>
               </div>
             </div>
@@ -342,7 +357,6 @@
       </q-card>
     </div>
 
-    <!-- PASO 3: REVISIÓN DE CÁLCULOS -->
     <div v-if="pasoActual === 2" class="paso-content">
       <q-card class="form-card">
         <q-card-section class="q-pa-lg">
@@ -430,7 +444,7 @@
               </div>
               <q-space />
               <div class="col-auto">
-                <q-btn label="Anterior" color="grey-7" flat @click="pasoActual = 1" />
+                <q-btn label="Anterior" color="grey-7" flat @click="pasoActual = 2" />
               </div>
               <div class="col-auto">
                 <q-btn label="Generar Planilla" color="positive" @click="generarPlanilla" />
@@ -441,7 +455,6 @@
       </q-card>
     </div>
 
-    <!-- Resumen Final -->
     <div class="q-mt-lg">
       <q-card class="stat-card">
         <q-card-section class="q-pa-lg">
@@ -491,7 +504,7 @@
 </template>
 
 <script setup name="GestionPagosPage">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 
 const $q = useQuasar()
@@ -500,29 +513,74 @@ const cargando = ref(true)
 const pasoActual = ref(0)
 
 // Estado
-const periodos = ['Mayo 2025', 'Abril 2025', 'Marzo 2025']
-const periodoSeleccionado = ref('Mayo 2025')
+const generarPeriodos = () => {
+  const periodosArr = []
+  const fechaActual = new Date()
+  const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+  
+  // Generar los últimos 12 meses
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(fechaActual.getFullYear(), fechaActual.getMonth() - i, 1)
+    periodosArr.push(`${mesesNombres[d.getMonth()]} ${d.getFullYear()}`)
+  }
+  return periodosArr
+}
 
-const listaEmpleados = ref([
-  { id: 1, nombre: 'Jonathan Antonio Melendez', dui: 'DUI-98787836', cargo: 'Tecnico en Soporte', departamento: 'Tecnología', salarioBase: 780, estado: 'Activo' },
-  { id: 2, nombre: 'Juan Eduardo Gonzalez', dui: 'DUI-79879465-1', cargo: 'Contador', departamento: 'Contabilidad', salarioBase: 900, estado: 'Activo' },
-  { id: 3, nombre: 'Ana Gabriela Ruiz', dui: 'DUI-85343628', cargo: 'Asistente Administrativo', departamento: 'Administración', salarioBase: 650, estado: 'Activo' },
-  { id: 4, nombre: 'Carlos Adolfo Martinez', dui: 'DUI-45678912-3', cargo: 'Desarrollador', departamento: 'Tecnología', salarioBase: 1200, estado: 'Activo' },
-  { id: 5, nombre: 'Maria Fernanda Lopez', dui: 'DUI-85340732-1', cargo: 'Analista de RRHH', departamento: 'Recursos Humanos', salarioBase: 850, estado: 'Activo' }
-])
+const periodos = generarPeriodos()
+const periodoSeleccionado = ref(periodos[0])
+
+const listaEmpleados = ref([])
+
+const cargarEmpleados = async () => {
+  try {
+    const res = await fetch('http://localhost:3000/api/empleados')
+    const data = await res.json()
+    listaEmpleados.value = data.map(e => ({
+      id: e.id,
+      nombre: e.nombres + ' ' + e.apellidos,
+      dui: e.dui,
+      cargo: e.contratos?.[0]?.cargo || 'Sin cargo',
+      departamento: e.departamento?.nombre || 'Sin departamento',
+      salarioBase: parseFloat(e.contratos?.[0]?.salarioContratado || 0),
+      contratoId: e.contratos?.[0]?.id || null,
+      estado: e.estado ? 'Activo' : 'Inactivo'
+    }))
+  } catch (error) {
+    console.error('Error al cargar empleados', error)
+  }
+}
 
 const empleadosSeleccionados = ref([])
 const busquedaEmpleado = ref('')
 const departamentoFiltro = ref('')
+const estadoPagoFiltro = ref('Pendientes de pago')
+const empleadosPagadosPeriodo = ref([])
+
+const verificarPagosPeriodo = async () => {
+  try {
+    const [mesTxt, anioTxt] = periodoSeleccionado.value.split(' ')
+    const mesesMapLocal = { 'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6, 'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12 }
+    const mes = mesesMapLocal[mesTxt] || 5
+    const anio = parseInt(anioTxt) || 2025
+
+    const res = await fetch(`http://localhost:3000/api/planillas/verificar/${mes}/${anio}`)
+    const data = await res.json()
+    empleadosPagadosPeriodo.value = data
+  } catch (error) {
+    console.error('Error al verificar pagos del periodo', error)
+  }
+}
 
 const empleadoActual = ref(null)
+const formularioNovedadesOriginal = ref(null)
 const formularioNovedades = ref({
   horasExtras: 0,
   bonificaciones: 0,
   tardanzas: 0,
   ausencias: 0,
   otrosDescuentos: 0,
-  observaciones: ''
+  observaciones: '',
+  justificante: ''
 })
 
 const novedades = ref({})
@@ -552,7 +610,11 @@ const empleadosFiltrados = computed(() => {
   return listaEmpleados.value.filter(e => {
     const coincideBusqueda = e.nombre.toLowerCase().includes(busquedaEmpleado.value.toLowerCase())
     const coincideDepartamento = !departamentoFiltro.value || e.departamento === departamentoFiltro.value
-    return coincideBusqueda && coincideDepartamento
+    
+    const estaPagado = empleadosPagadosPeriodo.value.includes(e.id)
+    const coincideEstadoPago = estadoPagoFiltro.value === 'Pagos finalizados' ? estaPagado : !estaPagado
+
+    return coincideBusqueda && coincideDepartamento && coincideEstadoPago
   })
 })
 
@@ -567,18 +629,41 @@ const totalAPagar = computed(() => {
 })
 
 // Métodos
+// Obtiene la inicial del primer nombre y primer apellido
 const getInitials = (nombre) => {
-  return nombre
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join('')
-}
+  if (!nombre) return '?';
+  const partes = nombre.trim().split(/\s+/);
+  if (partes.length === 1) return partes[0].charAt(0).toUpperCase();
+  
+  const primerNombre = partes[0].charAt(0).toUpperCase();
+  const indiceApellido = partes.length >= 3 ? 2 : 1;
+  const primerApellido = partes[indiceApellido].charAt(0).toUpperCase();
+  return primerNombre + primerApellido;
+};
 
-const getAvatarColor = (id) => {
-  const colors = ['#2563eb', '#16a34a', '#dc2626', '#ea580c', '#9333ea', '#0891b2']
-  return colors[id % colors.length]
-}
+// Devuelve un único color sólido y plano basado en el nombre
+const getAvatarColor = (nombre) => {
+  if (!nombre) return '#3b82f6'; // Azul por defecto si no hay nombre
+  
+  let hash = 0;
+  for (let i = 0; i < nombre.length; i++) {
+    hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Colores sólidos, limpios y sencillos
+  const colors = [
+    '#3b82f6', // Azul
+    '#10b981', // Verde
+    '#8b5cf6', // Morado
+    '#f97316', // Naranja
+    '#ef4444', // Rojo
+    '#06b6d4', // Cian
+    '#ec4899'  // Rosa
+  ];
+  
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
 
 const toggleEmpleado = (id) => {
   const index = empleadosSeleccionados.value.indexOf(id)
@@ -596,6 +681,64 @@ const toggleTodos = () => {
     empleadosSeleccionados.value = empleadosFiltrados.value.map(e => e.id)
   }
 }
+
+const mesesMap = { 'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6, 'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12 }
+
+watch(periodoSeleccionado, () => {
+  // Limpiar novedades en caché cuando cambia el periodo
+  novedades.value = {}
+  empleadosSeleccionados.value = []
+  verificarPagosPeriodo()
+})
+
+const irAPaso2 = async () => {
+  pasoActual.value = 1;
+  const [mesTxt, anioTxt] = periodoSeleccionado.value.split(' ')
+  const mes = mesesMap[mesTxt] || 5
+  const anio = parseInt(anioTxt) || 2025
+  
+  for (const id of empleadosSeleccionados.value) {
+    if (!novedades.value[id]) {
+      try {
+        const res = await fetch(`http://localhost:3000/api/marcaciones/resumen/${id}/${mes}/${anio}`)
+        const data = await res.json()
+        novedades.value[id] = {
+          horasExtras: parseFloat(data.horasExtrasMoneda) || 0,
+          tardanzas: parseFloat(data.tardanzasMoneda) || 0,
+          ausencias: parseFloat(data.ausenciasMoneda) || 0,
+          bonificaciones: 0,
+          otrosDescuentos: 0,
+          observaciones: '',
+          justificante: ''
+        }
+      } catch(e) { console.error('Error pre-cargando novedades para', id, e) }
+    }
+  }
+}
+
+const autoCargarNovedades = (id) => {
+  if (!id) return;
+  const nov = novedades.value[id]
+  if (nov) {
+    formularioNovedades.value = { ...nov }
+    formularioNovedadesOriginal.value = { ...nov }
+  }
+}
+
+watch(empleadoActual, (newId) => {
+  if (newId) {
+    autoCargarNovedades(newId)
+  } else {
+    formularioNovedadesOriginal.value = null
+  }
+})
+
+const requiereJustificante = computed(() => {
+  if (!formularioNovedadesOriginal.value) return false;
+  return formularioNovedades.value.horasExtras !== formularioNovedadesOriginal.value.horasExtras ||
+         formularioNovedades.value.tardanzas !== formularioNovedadesOriginal.value.tardanzas ||
+         formularioNovedades.value.ausencias !== formularioNovedadesOriginal.value.ausencias;
+})
 
 const obtenerEmpleado = (id) => {
   return listaEmpleados.value.find(e => e.id === id)
@@ -615,6 +758,10 @@ const obtenerSalarioBase = (id) => {
 
 const guardarNovedades = () => {
   if (empleadoActual.value) {
+    if (requiereJustificante.value && !formularioNovedades.value.justificante) {
+      $q.notify({ type: 'negative', message: 'Debe ingresar un justificante por modificar los cálculos automáticos', position: 'top' })
+      return false;
+    }
     novedades.value[empleadoActual.value] = { ...formularioNovedades.value }
     formularioNovedades.value = {
       horasExtras: 0,
@@ -622,10 +769,22 @@ const guardarNovedades = () => {
       tardanzas: 0,
       ausencias: 0,
       otrosDescuentos: 0,
-      observaciones: ''
+      observaciones: '',
+      justificante: ''
     }
+    formularioNovedadesOriginal.value = null
     empleadoActual.value = null
+    return true;
   }
+  return true;
+}
+
+const irAPaso3 = () => {
+  if (empleadoActual.value) {
+    const success = guardarNovedades();
+    if (!success) return; // Se detiene si hay error de validación
+  }
+  pasoActual.value = 2;
 }
 
 const calcularSalarioGravable = (empleadoId) => {
@@ -693,11 +852,45 @@ const cancelarProceso = () => {
 
 const generarPlanilla = async () => {
   try {
+    const [mesTxt, anioTxt] = periodoSeleccionado.value.split(' ')
+    const anio = parseInt(anioTxt) || 2025
+
+    const detalles = empleadosSeleccionados.value.map(id => {
+      const empleado = obtenerEmpleado(id)
+      const salarioBase = obtenerSalarioBase(id)
+      return {
+        empleadoId: id,
+        contratoId: empleado.contratoId || 0,
+        empleadoNombre: empleado.nombre,
+        salarioBase: salarioBase,
+        isss: calcularISS(id),
+        afp: calcularAFP(id),
+        renta: calcularISR(id),
+        salarioLiquido: calcularSalarioLiquido(id)
+      }
+    })
+
+    const payload = {
+      mes: mesTxt,
+      anio,
+      detalles
+    }
+
+    const res = await fetch('http://localhost:3000/api/planillas/guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    if (!res.ok) throw new Error('Error en el servidor')
+
     $q.notify({
       type: 'positive',
       message: 'Planilla generada exitosamente',
       position: 'top'
     })
+    
+    await verificarPagosPeriodo()
     cancelarProceso()
   } catch (error) {
     console.error('Error al generar planilla:', error)
@@ -709,7 +902,10 @@ const generarPlanilla = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  cargando.value = true
+  await cargarEmpleados()
+  await verificarPagosPeriodo()
   cargando.value = false
 })
 </script>

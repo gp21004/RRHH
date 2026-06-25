@@ -36,6 +36,7 @@ model Empleado {
 
   planillas DetallePlanilla[]
   contratos Contrato[]
+  marcaciones Marcacion[]
 }
 
 // --- TABLAS DE PLANILLA (Ajustadas para el controlador) ---
@@ -91,9 +92,9 @@ model Contrato {
   fechaInicio       DateTime  @db.Date
   fechaFin          DateTime? @db.Date
   salarioContratado Decimal   @db.Decimal(10, 2)
-  jornada           String
-  horario           String
-  diasLaborales     String
+  horaEntradaEsperada String    @default("08:00")
+  horaSalidaEsperada  String    @default("17:00")
+  diasLaborales       String    @default("[\"Lunes\",\"Martes\",\"Miércoles\",\"Jueves\",\"Viernes\"]")
   periodoPrueba     String
   clausulas         String?
   estado            String    @default("Vigente") // Vigente, Finalizado, Suspendido
@@ -101,4 +102,15 @@ model Contrato {
   detallePlanillas DetallePlanilla[]
   // Relación con Empleado (un empleado puede tener muchos contratos a lo largo del tiempo)
   empleado         Empleado          @relation(fields: [empleadoId], references: [id])
+}
+
+model Marcacion {
+  id          Int       @id @default(autoincrement())
+  empleadoId  Int
+  fecha       DateTime  @db.Date
+  horaEntrada DateTime
+  horaSalida  DateTime?
+  estado      String    @default("Presente") // Presente, Ausente, Tardanza
+  
+  empleado    Empleado  @relation(fields: [empleadoId], references: [id])
 }
