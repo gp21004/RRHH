@@ -1,6 +1,63 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// ─── Helpers de cálculo por tipo de contrato ────────────────────────────────
+
+/**
+ * Determina si el contrato es de "Servicios Profesionales".
+ * Se compara en minúsculas para evitar errores de capitalización.
+ */
+const esServiciosProfesionales = (tipoContrato = '') =>
+  tipoContrato.toLowerCase().includes('servicio') ||
+  tipoContrato.toLowerCase().includes('profesional');
+
+/**
+ * Calcula los descuentos según el tipo de contrato.
+ * - Servicios Profesionales: Solo ISR fijo del 10%. ISSS y AFP = null (N/A).
+ * - Contrato normal: ISSS + AFP + ISR por tablas legales de El Salvador.
+ *
+ * Devuelve: { isss, afp, isr, salarioLiquido }
+ * Los campos null indican "No Aplica".
+ */
+const calcularDescuentos = (salario, tipoContrato) => {
+  if (esServiciosProfesionales(tipoContrato)) {
+    // ── Servicios Profesionales: solo ISR 10% ──────────────────────────────
+    const isr = Number((salario * 0.10).toFixed(2));
+    const salarioLiquido = Number((salario - isr).toFixed(2));
+    return { isss: null, afp: null, isr, salarioLiquido };
+  }
+
+  // ── Contrato normal: ISSS + AFP + ISR por tablas ──────────────────────────
+
+  // ISSS (3% con tope de $30)
+  const isss = salario > 1000
+    ? 30
+    : Number((salario * 0.03).toFixed(2));
+
+  // AFP (7.25%)
+  const afp = Number((salario * 0.0725).toFixed(2));
+
+  // Base gravable para ISR
+  const rentaImponible = Number((salario - isss - afp).toFixed(2));
+
+  // ISR por tablas mensuales El Salvador
+  let isr = 0;
+  if (rentaImponible > 550 && rentaImponible <= 895.24) {
+    isr = ((rentaImponible - 550) * 0.10) + 17.67;
+  } else if (rentaImponible > 895.24 && rentaImponible <= 2038.10) {
+    isr = ((rentaImponible - 895.24) * 0.20) + 60;
+  } else if (rentaImponible > 2038.10) {
+    isr = ((rentaImponible - 2038.10) * 0.30) + 288.57;
+  }
+  isr = Number(isr.toFixed(2));
+
+  const salarioLiquido = Number((salario - isss - afp - isr).toFixed(2));
+
+  return { isss, afp, isr, salarioLiquido };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const generarPlanillaMensual = async (req, res) => {
   try {
     const contratos = await prisma.contrato.findMany({
@@ -12,62 +69,23 @@ const generarPlanillaMensual = async (req, res) => {
       }
     });
 
-    console.log('Contratos encontrados:');
-    console.log(contratos);
+    console.log('Contratos encontrados:', contratos.length);
 
     const planillaCalculada = contratos.map((contrato) => {
       const salario = Number(contrato.salarioContratado);
+      const tipo = contrato.tipoContrato || '';
 
-      // ISSS (3% con tope de $30)
-      let isss =
-        salario > 1000
-          ? 30
-          : Number((salario * 0.03).toFixed(2));
-
-      // AFP (7.25%)
-      let afp = Number((salario * 0.0725).toFixed(2));
-
-      // Base gravable
-      const rentaImponible = Number(
-        (salario - isss - afp).toFixed(2)
-      );
-
-      // ISR
-      let isr = 0;
-
-      if (rentaImponible > 550 && rentaImponible <= 895.24) {
-        isr =
-          ((rentaImponible - 550) * 0.10) + 17.67;
-      } else if (
-        rentaImponible > 895.24 &&
-        rentaImponible <= 2038.10
-      ) {
-        isr =
-          ((rentaImponible - 895.24) * 0.20) + 60;
-      } else if (rentaImponible > 2038.10) {
-        isr =
-          ((rentaImponible - 2038.10) * 0.30) + 288.57;
-      }
-
-      isr = Number(isr.toFixed(2));
-
-      // Salario líquido
-      const salarioLiquido = Number(
-        (salario - isss - afp - isr).toFixed(2)
-      );
+      const { isss, afp, isr, salarioLiquido } = calcularDescuentos(salario, tipo);
 
       return {
         empleadoId: contrato.empleado.id,
         contratoId: contrato.id,
-
+        tipoContrato: tipo,
         empleadoNombre: `${contrato.empleado.nombres} ${contrato.empleado.apellidos}`,
-
         salarioBase: salario,
-
-        isss,
-        afp,
+        isss,           // null = N/A (Servicios Profesionales)
+        afp,            // null = N/A (Servicios Profesionales)
         renta: isr,
-
         salarioLiquido
       };
     });
@@ -76,10 +94,7 @@ const generarPlanillaMensual = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      error: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 

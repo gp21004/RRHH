@@ -135,7 +135,9 @@
                 v-model="empleado.fechaNacimiento"
                 label="Fecha de Nacimiento"
                 type="date"
-                max="9999-12-31"
+                :max="fechaMaxNacimiento"
+                :min="fechaMinNacimiento"
+                :rules="[validarFechaNacimiento]"
                 class="form-input"
               />
             </div>
@@ -155,8 +157,6 @@
 
           <div class="row q-col-gutter-lg q-mb-lg">
 
-
-
             <div class="col-12 col-sm-4">
               <q-select
                 outlined
@@ -167,6 +167,21 @@
                 emit-value
                 map-options
                 label="Departamento *"
+                required
+                class="form-input"
+              />
+            </div>
+
+            <div class="col-12 col-sm-4">
+              <q-select
+                outlined
+                v-model="empleado.genero"
+                :options="opcionesGenero"
+                option-label="label"
+                option-value="value"
+                emit-value
+                map-options
+                label="Género *"
                 required
                 class="form-input"
               />
@@ -199,13 +214,7 @@
 
           </div>
 
-          <div class="q-mb-lg">
-            <q-toggle
-              v-model="empleado.estado"
-              label="Empleado Activo"
-              color="primary"
-            />
-          </div>
+
 
           <div class="row q-col-gutter-md">
 
@@ -542,9 +551,9 @@ const editando = ref(false)
     fechaNacimiento: '',
     fechaIngreso: '',
     departamentoId: null,
+    genero: null,
     telefono: '',
-    correo: '',
-    estado: true
+    correo: ''
   }
 
 const depto = ref({
@@ -569,6 +578,36 @@ const opcionesEstado = [
   { label: 'Activo', value: true },
   { label: 'Inactivo', value: false }
 ]
+
+const opcionesGenero = [
+  { label: 'Hombre', value: 'Hombre' },
+  { label: 'Mujer', value: 'Mujer' }
+]
+
+// Rango de fechas de nacimiento permitido (18-60 años)
+const fechaMaxNacimiento = computed(() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 18)
+  return d.toISOString().split('T')[0]
+})
+
+const fechaMinNacimiento = computed(() => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 60)
+  return d.toISOString().split('T')[0]
+})
+
+const validarFechaNacimiento = (val) => {
+  if (!val) return true
+  const nacimiento = new Date(val + 'T00:00:00')
+  const hoy = new Date()
+  let edad = hoy.getFullYear() - nacimiento.getFullYear()
+  const m = hoy.getMonth() - nacimiento.getMonth()
+  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--
+  if (edad < 18) return 'El empleado debe tener al menos 18 años'
+  if (edad > 60) return 'El empleado no puede tener más de 60 años'
+  return true
+}
 
 const empleadosFiltrados = computed(() => {
 
@@ -794,9 +833,9 @@ const crearEmpleadoAPI = async (datosEmpleado) => {
       fechaNacimiento: datosEmpleado.fechaNacimiento || null,
       fechaIngreso: datosEmpleado.fechaIngreso || undefined,
       departamentoId: datosEmpleado.departamentoId,
+      genero: datosEmpleado.genero || null,
       telefono: datosEmpleado.telefono,
-      correo: datosEmpleado.correo,
-      estado: datosEmpleado.estado
+      correo: datosEmpleado.correo
     }
 
     const res = await fetch(
@@ -863,9 +902,9 @@ const editarEmpleado = (emp) => {
       ? emp.fechaIngreso.split('T')[0]
       : '',
     departamentoId: emp.departamentoId || null,
+    genero: emp.genero || null,
     telefono: emp.telefono || '',
-    correo: emp.correo || '',
-    estado: emp.estado ?? true
+    correo: emp.correo || ''
   }
 
   console.log('[v0] Datos del formulario cargados')
@@ -889,9 +928,9 @@ const actualizarEmpleado = async () => {
       fechaNacimiento: empleado.value.fechaNacimiento || null,
       fechaIngreso: empleado.value.fechaIngreso || undefined,
       departamentoId: empleado.value.departamentoId,
+      genero: empleado.value.genero || null,
       telefono: empleado.value.telefono,
-      correo: empleado.value.correo,
-      estado: Boolean(empleado.value.estado),
+      correo: empleado.value.correo
     }
 
     console.log('[v0] Actualizando empleado con ID:', empleado.value.id)

@@ -29,6 +29,7 @@ model Empleado {
   fechaIngreso    DateTime     @default(now())
   fechaNacimiento DateTime     @db.Date
   estado          Boolean      @default(true) // Activo o Inactivo
+  genero          String?      // Hombre o Mujer
   correo          String?
   telefono        String?
   departamentoId  Int

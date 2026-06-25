@@ -368,7 +368,15 @@
           <div v-for="empleadoId in empleadosSeleccionados" :key="empleadoId" class="revision-empleado q-mb-lg">
             <div class="revision-header q-mb-md">
               <h3 class="text-weight-bold" style="color: #e5e7eb; margin: 0;">{{ obtenerNombreEmpleado(empleadoId) }}</h3>
-              <span class="text-subtitle2" style="color: #9ca3af;">{{ obtenerCargoEmpleado(empleadoId) }}</span>
+              <div class="row items-center q-gutter-sm q-mt-xs">
+                <span class="text-subtitle2" style="color: #9ca3af;">{{ obtenerCargoEmpleado(empleadoId) }}</span>
+                <q-badge
+                  :color="esServiciosProfesionales(empleadoId) ? 'deep-purple' : 'blue-8'"
+                  text-color="white"
+                  :label="obtenerEmpleado(empleadoId)?.tipoContrato || 'Sin tipo'"
+                  class="q-ml-sm"
+                />
+              </div>
             </div>
 
             <div class="calculo-breakdown">
@@ -414,16 +422,26 @@
 
               <div class="calculo-section">
                 <div class="section-title">Descuentos Legales</div>
-                <div class="calculo-row negativo">
+
+                <!-- ISSS -->
+                <div class="calculo-row" :class="calcularISS(empleadoId) === null ? 'na-row' : 'negativo'">
                   <span class="label">- ISSS (3%)</span>
-                  <span class="valor">{{ formatMoney(calcularISS(empleadoId)) }}</span>
+                  <span v-if="calcularISS(empleadoId) === null" class="valor na-badge">N/A</span>
+                  <span v-else class="valor">{{ formatMoney(calcularISS(empleadoId)) }}</span>
                 </div>
-                <div class="calculo-row negativo">
-                  <span class="label">- AFP (6.25%)</span>
-                  <span class="valor">{{ formatMoney(calcularAFP(empleadoId)) }}</span>
+
+                <!-- AFP -->
+                <div class="calculo-row" :class="calcularAFP(empleadoId) === null ? 'na-row' : 'negativo'">
+                  <span class="label">- AFP (7.25%)</span>
+                  <span v-if="calcularAFP(empleadoId) === null" class="valor na-badge">N/A</span>
+                  <span v-else class="valor">{{ formatMoney(calcularAFP(empleadoId)) }}</span>
                 </div>
+
+                <!-- ISR -->
                 <div class="calculo-row negativo">
-                  <span class="label">- ISR</span>
+                  <span class="label">
+                    - ISR {{ esServiciosProfesionales(empleadoId) ? '(10% Honorarios)' : '' }}
+                  </span>
                   <span class="valor">{{ formatMoney(calcularISR(empleadoId)) }}</span>
                 </div>
               </div>
@@ -543,6 +561,7 @@ const cargarEmpleados = async () => {
       departamento: e.departamento?.nombre || 'Sin departamento',
       salarioBase: parseFloat(e.contratos?.[0]?.salarioContratado || 0),
       contratoId: e.contratos?.[0]?.id || null,
+      tipoContrato: e.contratos?.[0]?.tipoContrato || '',
       estado: e.estado ? 'Activo' : 'Inactivo'
     }))
   } catch (error) {
@@ -799,27 +818,54 @@ const calcularSalarioGravable = (empleadoId) => {
          (nov.otrosDescuentos || 0)
 }
 
+// ─── Helpers de tipo de contrato ─────────────────────────────────────────────
+const esServiciosProfesionales = (empleadoId) => {
+  const tipo = (obtenerEmpleado(empleadoId)?.tipoContrato || '').toLowerCase()
+  return tipo.includes('servicio') || tipo.includes('profesional')
+}
+
+// ─── Cálculos de descuentos ───────────────────────────────────────────────────
 const calcularISS = (empleadoId) => {
-  return calcularSalarioGravable(empleadoId) * 0.03
+  if (esServiciosProfesionales(empleadoId)) return null   // N/A
+  const salario = calcularSalarioGravable(empleadoId)
+  return salario > 1000 ? 30 : Number((salario * 0.03).toFixed(2))
 }
 
 const calcularAFP = (empleadoId) => {
-  return calcularSalarioGravable(empleadoId) * 0.0625
+  if (esServiciosProfesionales(empleadoId)) return null   // N/A
+  return Number((calcularSalarioGravable(empleadoId) * 0.0725).toFixed(2))
 }
 
 const calcularISR = (empleadoId) => {
   const salarioGravable = calcularSalarioGravable(empleadoId)
   if (salarioGravable <= 0) return 0
-  if (salarioGravable <= 1693.62) return 0
-  if (salarioGravable <= 2538.43) return (salarioGravable - 1693.62) * 0.10
-  return (2538.43 - 1693.62) * 0.10 + (salarioGravable - 2538.43) * 0.20
+
+  if (esServiciosProfesionales(empleadoId)) {
+    // Servicios Profesionales: ISR fijo 10%
+    return Number((salarioGravable * 0.10).toFixed(2))
+  }
+
+  // Contrato normal: ISR por tablas (base imponible luego de ISSS y AFP)
+  const isss = calcularISS(empleadoId)
+  const afp  = calcularAFP(empleadoId)
+  const rentaImponible = salarioGravable - isss - afp
+  let isr = 0
+  if (rentaImponible > 550 && rentaImponible <= 895.24) {
+    isr = (rentaImponible - 550) * 0.10 + 17.67
+  } else if (rentaImponible > 895.24 && rentaImponible <= 2038.10) {
+    isr = (rentaImponible - 895.24) * 0.20 + 60
+  } else if (rentaImponible > 2038.10) {
+    isr = (rentaImponible - 2038.10) * 0.30 + 288.57
+  }
+  return Number(isr.toFixed(2))
 }
 
 const calcularSalarioLiquido = (empleadoId) => {
-  return calcularSalarioGravable(empleadoId) - 
-         calcularISS(empleadoId) - 
-         calcularAFP(empleadoId) - 
-         calcularISR(empleadoId)
+  const gravable = calcularSalarioGravable(empleadoId)
+  const isss = calcularISS(empleadoId) ?? 0
+  const afp  = calcularAFP(empleadoId) ?? 0
+  const isr  = calcularISR(empleadoId)
+  return Number((gravable - isss - afp - isr).toFixed(2))
 }
 
 const calcularTotalSalarios = () => {
@@ -858,13 +904,15 @@ const generarPlanilla = async () => {
     const detalles = empleadosSeleccionados.value.map(id => {
       const empleado = obtenerEmpleado(id)
       const salarioBase = obtenerSalarioBase(id)
+      const isss = calcularISS(id)   // null si N/A
+      const afp  = calcularAFP(id)   // null si N/A
       return {
         empleadoId: id,
         contratoId: empleado.contratoId || 0,
         empleadoNombre: empleado.nombre,
         salarioBase: salarioBase,
-        isss: calcularISS(id),
-        afp: calcularAFP(id),
+        isss: isss ?? 0,
+        afp:  afp  ?? 0,
         renta: calcularISR(id),
         salarioLiquido: calcularSalarioLiquido(id)
       }
@@ -1173,6 +1221,21 @@ onMounted(async () => {
 
 .calculo-row.negativo .valor {
   color: #ef4444;
+}
+
+.calculo-row.na-row {
+  opacity: 0.6;
+}
+
+.na-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.15);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  border-radius: 4px;
+  padding: 1px 8px;
+  letter-spacing: 0.05em;
 }
 
 .calculo-row.gravable {

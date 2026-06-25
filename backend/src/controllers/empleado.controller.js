@@ -17,10 +17,25 @@ const crearEmpleado = async (req, res) => {
       fechaNacimiento,
       fechaIngreso,
       departamentoId,
+      genero,
       telefono,
-      correo,
-      estado
+      correo
     } = req.body
+
+    // Validación de rango de edad (18 - 60 años)
+    if (fechaNacimiento) {
+      const nacimiento = new Date(fechaNacimiento + 'T00:00:00')
+      const hoy = new Date()
+      let edad = hoy.getFullYear() - nacimiento.getFullYear()
+      const m = hoy.getMonth() - nacimiento.getMonth()
+      if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--
+      if (edad < 18) {
+        return res.status(400).json({ error: 'El empleado debe tener al menos 18 años' })
+      }
+      if (edad > 60) {
+        return res.status(400).json({ error: 'El empleado no puede tener más de 60 años' })
+      }
+    }
 
     const nuevoEmpleado = await prisma.empleado.create({
       data: {
@@ -39,10 +54,11 @@ const crearEmpleado = async (req, res) => {
           ? new Date(fechaIngreso + 'T00:00:00')
           : undefined,
 
+        genero: genero || null,
         telefono: telefono || null,
         correo: correo || null,
 
-        estado: estado === false ? false : true,
+        estado: true,
 
         departamento: {
           connect: {
@@ -142,10 +158,26 @@ const actualizarEmpleado = async (req, res) => {
       departamentoId,
       fechaNacimiento,
       fechaIngreso,
+      genero,
       telefono,
       correo,
       estado
     } = req.body
+
+    // Validación de rango de edad (18 - 60 años)
+    if (fechaNacimiento) {
+      const nacimiento = new Date(fechaNacimiento + 'T00:00:00')
+      const hoy = new Date()
+      let edad = hoy.getFullYear() - nacimiento.getFullYear()
+      const m = hoy.getMonth() - nacimiento.getMonth()
+      if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--
+      if (edad < 18) {
+        return res.status(400).json({ error: 'El empleado debe tener al menos 18 años' })
+      }
+      if (edad > 60) {
+        return res.status(400).json({ error: 'El empleado no puede tener más de 60 años' })
+      }
+    }
 
 const empleadoActualizado = await prisma.empleado.update({
   where: {
@@ -168,6 +200,7 @@ const empleadoActualizado = await prisma.empleado.update({
       fechaIngreso: new Date(fechaIngreso + 'T00:00:00')
     }),
 
+    genero: genero || null,
     telefono: telefono || null,
     correo: correo || null,
 
