@@ -16,6 +16,7 @@ const routes = [
       { path: 'contratacion', component: () => import('pages/ContratacionPage.vue') }, // Módulo 1
       { path: 'planillas', component: () => import('pages/PlanillaPage.vue') }, // Módulo 2
       { path: 'historial', component: () => import('pages/HistorialPage.vue') }, // Módulo 3
+      { path: 'transacciones', component: () => import('pages/TransaccionesPage.vue') }, // Transacciones
       { path: 'contratos', component: () => import('pages/ContratosPage.vue') }, // Módulo 4
       { path: '/empleado/:id', name: 'detalle-empleado', component: () => import('components/DetalleEmpleado.vue') }, // Módulo 5
       { path: 'contrato/:id', name: 'contrato-detalle', component: () => import('components/ContratoDetalle.vue') }, // Módulo 6

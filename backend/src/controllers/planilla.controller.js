@@ -202,7 +202,15 @@ const obtenerHistorial = async (req, res) => {
     const historial =
       await prisma.planilla.findMany({
         include: {
-          detalles: true
+          detalles: {
+            include: {
+              empleado: {
+                include: {
+                  departamento: true
+                }
+              }
+            }
+          }
         },
         orderBy: {
           fechaGeneracion: 'desc'
