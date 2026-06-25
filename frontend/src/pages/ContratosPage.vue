@@ -298,6 +298,14 @@
               clearable
             />
           </div>
+          <div class="col-12 col-sm-6">
+            <q-checkbox 
+              v-model="filtroVencer"
+              label="Mostrar solo contratos por vencer (30 días)"
+              color="warning"
+              left-label
+            />
+          </div>
         </div>
       </q-card-section>
     </q-card>
@@ -462,6 +470,7 @@ const empleadosDisponibles = computed(() => {
 const listaContratos = ref([])
 const filtroEmpleado = ref('')
 const filtroEstado = ref(null)
+const filtroVencer = ref(false) // Nuevo filtro para contratos por vencer en 30 días
 
 const tiposContrato = ['Por tiempo indefinido', 'Contrato Temporal', 'Por Proyecto', 'Pasantía', 'Consultoría']
 const estadosContrato = ['Activo', 'Pendiente', 'Finalizado', 'Pausado']
@@ -698,6 +707,19 @@ const verContrato = (contrato) => {
 
 const editarContrato = (contrato) => {
   console.log('[v0] Editando contrato:', contrato)
+    if (
+    ['Finalizado', 'Despedido', 'Renuncia'].includes(
+      contrato.estado
+    )
+  ) {
+    $q.notify({
+      type: 'warning',
+      message: `No se puede editar un contrato ${contrato.estado}`,
+      position: 'top'
+    })
+
+    return
+  }
   
   contratoEnEdicion = contrato
   empleadoSeleccionado.value = listaEmpleados.value.find(e => e.id === contrato.empleadoId)
@@ -964,7 +986,17 @@ const finalizados = computed(() => {
 })
 
 const porVencer = computed(() => {
-  return 2 // Placeholder - en producción se calcularía basado en fechas
+  const hoy = new Date()
+  const en30Dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000)
+  
+  return listaContratos.value.filter(contrato => {
+    // Solo contar contratos activos con fecha de fin definida
+    if (contrato.estado !== 'Activo' || !contrato.fechaFin) return false
+    
+    const fechaFin = new Date(contrato.fechaFin)
+    // Contratos que vencen entre hoy y en 30 días
+    return fechaFin >= hoy && fechaFin <= en30Dias
+  }).length
 })
 
 const totalContratos = computed(() => listaContratos.value.length)
@@ -979,13 +1011,27 @@ const porcentajePendiente = computed(() => {
 
 // Computed - Filtrados
 const contratosFiltrados = computed(() => {
+  const hoy = new Date()
+  const en30Dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000)
+  
   return listaContratos.value.filter(contrato => {
     const coincideEmpleado = !filtroEmpleado.value || 
       contrato.empleado.toLowerCase().includes(filtroEmpleado.value.toLowerCase())
     
     const coincideEstado = !filtroEstado.value || contrato.estado === filtroEstado.value
+    
+    // Filtro de vencimiento: si está activado, mostrar solo contratos que vencen en 30 días
+    let coincideVencer = true
+    if (filtroVencer.value) {
+      if (!contrato.fechaFin) {
+        coincideVencer = false // No mostrar contratos sin fecha de fin
+      } else {
+        const fechaFin = new Date(contrato.fechaFin)
+        coincideVencer = fechaFin >= hoy && fechaFin <= en30Dias && contrato.estado === 'Activo'
+      }
+    }
 
-    return coincideEmpleado && coincideEstado
+    return coincideEmpleado && coincideEstado && coincideVencer
   })
 })
 const generarPDF = async () => {

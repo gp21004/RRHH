@@ -125,7 +125,25 @@ const crearContrato = async (req, res) => {
 const actualizarContrato = async (req, res) => {
   try {
     const { id } = req.params;
+    const contratoExistente = await prisma.contrato.findUnique({
+        where: {
+          id: Number(id)
+        }
+      })
 
+      if (!contratoExistente) {
+        return res.status(404).json({
+          message: 'Contrato no encontrado'
+        })
+      }
+
+      if (
+        ['Finalizado', 'Despido','Renuncia' ].includes(contratoExistente.estado)
+      ) {
+        return res.status(400).json({
+          message: `No se puede editar un contrato con estado "${contratoExistente.estado}"`
+        })
+      }
     const {
       empleadoId,
       tipoContrato,
