@@ -466,6 +466,19 @@ const filtroEstado = ref(null)
 const tiposContrato = ['Por tiempo indefinido', 'Contrato Temporal', 'Por Proyecto', 'Pasantía', 'Consultoría']
 const estadosContrato = ['Activo', 'Pendiente', 'Finalizado', 'Pausado']
 
+// Estados terminales que no permiten cambios
+const estadosTerminales = ['Finalizado', 'Despedido', 'Renuncia', 'Suspendido']
+
+// Mapeo de transiciones válidas
+const transicionesValidas = {
+  'Activo': ['Finalizado', 'Despedido', 'Renuncia', 'Suspendido'],
+  'Suspendido': ['Activo', 'Despedido', 'Renuncia'],
+  'Finalizado': [],
+  'Despedido': [],
+  'Renuncia': [],
+  'Pendiente': ['Activo', 'Cancelado']
+}
+
 const columnasContratos = [
   { name: 'empleado', label: 'Empleado', field: 'empleado', align: 'left', sortable: true },
   { name: 'tipoContrato', label: 'Tipo de Contrato', field: 'tipoContrato', align: 'center', sortable: true },
@@ -781,18 +794,31 @@ const cancelarEdicion = () => {
 }
 
 const cambiarEstadoContrato = (contrato) => {
+  // Verificar si el contrato está en estado terminal
+  if (estadosTerminales.includes(contrato.estado)) {
+    $q.notify({
+      type: 'warning',
+      message: `No se puede cambiar el estado de un contrato en estado ${contrato.estado}`,
+      position: 'top'
+    })
+    return
+  }
+
+  // Obtener estados válidos para la transición
+  const estadosValidos = transicionesValidas[contrato.estado] || ['Finalizado', 'Despedido', 'Renuncia', 'Suspendido']
+  
+  const items = estadosValidos.map(estado => ({
+    label: estado,
+    value: estado
+  }))
+
   $q.dialog({
     title: 'Cambiar Estado del Contrato',
-    message: `¿Qué deseas hacer con el contrato de ${contrato.empleado}?`,
+    message: `¿A qué estado deseas cambiar el contrato de ${contrato.empleado}? (Estado actual: ${contrato.estado})`,
     options: {
       type: 'radio',
       model: contrato.estado,
-      items: [
-        { label: 'Finalizado', value: 'Finalizado' },
-        { label: 'Despedido', value: 'Despedido' },
-        { label: 'Renuncia', value: 'Renuncia' },
-        { label: 'Suspendido', value: 'Suspendido' }
-      ]
+      items: items
     },
     cancel: true,
     persistent: true
@@ -807,7 +833,7 @@ const cambiarEstadoContrato = (contrato) => {
       if (res.ok) {
         $q.notify({
           type: 'positive',
-          message: `Estado actualizado a ${nuevoEstado}`,
+          message: `Estado actualizado de ${contrato.estado} a ${nuevoEstado}`,
           position: 'top'
         })
         await cargarContratos()

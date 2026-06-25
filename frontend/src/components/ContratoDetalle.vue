@@ -83,6 +83,8 @@
                 label="Cambiar Estado"
                 size="md"
                 @click="mostrarDialogoEstado = true"
+                :disable="esEstadoTerminal"
+                :title="esEstadoTerminal ? `No se puede cambiar estado desde ${contrato.estado}` : ''"
                 unelevated
               />
               <q-btn
@@ -251,10 +253,17 @@
         <q-separator />
 
         <q-card-section>
-          <div class="text-subtitle2 q-mb-md">Selecciona el nuevo estado:</div>
+          <div class="text-subtitle2 q-mb-md">
+            Selecciona el nuevo estado para {{ contrato.empleado?.nombres }} {{ contrato.empleado?.apellidos }}:
+          </div>
+          
+          <div v-if="estadosValidos.length === 0" class="text-warning q-mb-md">
+            Este contrato está en estado {{ contrato.estado }} y no puede cambiar a ningún otro estado.
+          </div>
+          
           <div class="q-gutter-md">
             <q-btn
-              v-for="est in estadosDisponibles"
+              v-for="est in estadosValidos"
               :key="est"
               outline
               :label="est"
@@ -268,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 
@@ -282,7 +291,28 @@ const contrato = ref({})
 const mostrarDialogoEstado = ref(false)
 const descargandoPDF = ref(false)
 
-const estadosDisponibles = ['Activo', 'Finalizado', 'Despedido', 'Renuncia', 'Suspendido']
+// Estados que no permiten cambios (estados terminales)
+const estadosTerminales = ['Finalizado', 'Despedido', 'Renuncia', 'Suspendido']
+
+// Mapeo de transiciones válidas permitidas
+const transicionesValidas = {
+  'Activo': ['Finalizado', 'Despedido', 'Renuncia', 'Suspendido'],
+  'Suspendido': ['Activo', 'Despedido', 'Renuncia'],
+  'Finalizado': [],
+  'Despedido': [],
+  'Renuncia': []
+}
+
+// Computed para obtener estados válidos según el estado actual
+const estadosValidos = computed(() => {
+  if (!contrato.value.estado) return []
+  return transicionesValidas[contrato.value.estado] || []
+})
+
+// Verificar si el contrato está en estado terminal
+const esEstadoTerminal = computed(() => {
+  return estadosTerminales.includes(contrato.value.estado)
+})
 
 const cargarContrato = async () => {
   try {
@@ -367,6 +397,16 @@ const editarContrato = () => {
 }
 
 const cambiarEstado = async (nuevoEstado) => {
+  // Validar que la transición sea permitida
+  if (!estadosValidos.value.includes(nuevoEstado)) {
+    $q.notify({
+      type: 'negative',
+      message: `No se permite cambiar de ${contrato.value.estado} a ${nuevoEstado}`,
+      position: 'top'
+    })
+    return
+  }
+
   try {
     const res = await fetch(
       `http://localhost:3000/api/contratos/${contrato.value.id}`,
@@ -382,7 +422,7 @@ const cambiarEstado = async (nuevoEstado) => {
     if (res.ok) {
       $q.notify({
         type: 'positive',
-        message: `Estado actualizado a ${nuevoEstado}`,
+        message: `Estado actualizado de ${contrato.value.estado} a ${nuevoEstado}`,
         position: 'top'
       })
       mostrarDialogoEstado.value = false
