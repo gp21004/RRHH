@@ -20,20 +20,20 @@ model Departamento {
 // --- TABLA DE EMPLEADOS (Contexto El Salvador) ---
 
 model Empleado {
-  id              Int          @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   nombres         String
   apellidos       String
-  dui             String       @unique // Formato: 00000000-0
-  nit             String?      @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
-  nup_afp         String?      @unique // Número Único Previsional
-  fechaIngreso    DateTime     @default(now())
-  fechaNacimiento DateTime     @db.Date
-  estado          Boolean      @default(true) // Activo o Inactivo
-  genero          String?      // Hombre o Mujer
+  dui             String           @unique // Formato: 00000000-0
+  nit             String?          @unique // Opcional, ya que ahora el DUI reemplaza al NIT en muchos casos
+  nup_afp         String?          @unique // Número Único Previsional
+  fechaIngreso    DateTime         @default(now())
+  fechaNacimiento DateTime         @db.Date
+  estado          Boolean          @default(true) // Activo o Inactivo
+  genero          String?          // Hombre o Mujer
   correo          String?
   telefono        String?
   departamentoId  Int
-  departamento    Departamento @relation(fields: [departamentoId], references: [id])
+  departamento    Departamento     @relation(fields: [departamentoId], references: [id])
 
   planillas DetallePlanilla[]
   contratos Contrato[]
@@ -71,7 +71,7 @@ model DetallePlanilla {
   empleado Empleado? @relation(fields: [empleadoId], references: [id])
 }
 
-// --- TABLA DE USUARIOS (Autenticación) ---
+// --- TABLA DE USUARIOS (Autenticación - MODIFICADA) ---
 
 model Usuario {
   id             Int      @id @default(autoincrement())
@@ -79,10 +79,14 @@ model Usuario {
   password       String // Hash bcrypt
   nombreCompleto String
   correo         String?
-  rol            String   @default("admin") // admin, supervisor, empleado
   activo         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // RELACIÓN CON EL NUEVO MODELO ROL
+  // Se define como opcional (Int?) temporalmente por seguridad si ya tienes datos existentes.
+  rolId          Int?
+  rol            Rol?     @relation(fields: [rolId], references: [id])
 }
 
 model Contrato {
@@ -103,7 +107,6 @@ model Contrato {
   detallePlanillas DetallePlanilla[]
   // Relación con Empleado (un empleado puede tener muchos contratos a lo largo del tiempo)
   empleado         Empleado          @relation(fields: [empleadoId], references: [id])
-  documentos ContratoDocumento[]
 }
 
 model Marcacion {
@@ -116,22 +119,35 @@ model Marcacion {
   
   empleado    Empleado  @relation(fields: [empleadoId], references: [id])
 }
-model ContratoDocumento {
-  id              Int       @id @default(autoincrement())
 
-  contratoId      Int       
-  contrato        Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+// --- NUEVAS TABLAS PARA CONTROL DE ACCESOS (RBAC) ---
 
-  nombreArchivo   String
-  nombreOriginal  String
-  rutaArchivo     String
-  tipoMime        String
-  tamano          Int
+model Rol {
+  id          Int          @id @default(autoincrement())
+  nombre      String       @unique // Ej: "Administrador", "Finanzas"
+  descripcion String?
+  isDefault   Boolean      @default(false)
+  
+  // Relaciones
+  usuarios    Usuario[]
+  permisos    RolPermiso[]
+}
 
-  tipo            String    @default("CONTRATO_FIRMADO")
+model Permiso {
+  id     String       @id // Guardará exactamente tus IDs del frontend: 'dashboard', 'planillas', etc.
+  nombre String       // Ej: "Dashboard", "Generación de Planillas"
+  
+  // Relaciones
+  roles  RolPermiso[]
+}
 
-  fechaSubida     DateTime  @default(now())
+// Tabla intermedia para la relación Muchos a Muchos entre Roles y Permisos
+model RolPermiso {
+  rolId     Int
+  permisoId String
+  
+  rol       Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso   Permiso @relation(fields: [permisoId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  @@id([rolId, permisoId])
 }
