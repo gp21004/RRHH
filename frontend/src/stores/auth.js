@@ -138,6 +138,27 @@ export function useAuth() {
     logout,
     fetchProfile,
     updateProfile,
-    changePassword
+    changePassword,
+    hasPermission
   }
+}
+
+// Mock temporal de permisos por rol para el Route Guard
+const rolePermissions = {
+  admin: ['dashboard', 'contratacion', 'planillas', 'historial', 'transacciones', 'contratos', 'configuracion', 'gestion-pagos'],
+  'recursos-humanos': ['dashboard', 'contratacion', 'planillas', 'contratos'],
+  finanzas: ['dashboard', 'historial', 'transacciones', 'gestion-pagos'],
+  empleado: ['dashboard', 'perfil']
+}
+
+function hasPermission(modulo) {
+  if (!modulo) return true // Ruta sin protección específica
+  
+  const rolActual = state.user?.rol?.toLowerCase() || ''
+  
+  // Hardcode administrador
+  if (rolActual === 'admin' || rolActual === 'administrador') return true
+  
+  const permisosDelRol = rolePermissions[rolActual] || []
+  return permisosDelRol.includes(modulo)
 }

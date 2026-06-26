@@ -48,6 +48,28 @@ export default defineRouter((/* { store, ssrContext } */) => {
       return
     }
 
+    // Validación de Roles y Permisos (Route Guards)
+    if (to.meta.permiso && isAuthenticated.value) {
+      const { hasPermission } = useAuth()
+      
+      if (!hasPermission(to.meta.permiso)) {
+        // Importación dinámica de Notify para no romper en SSR si lo hubiera
+        import('quasar').then(({ Notify }) => {
+          Notify.create({
+            type: 'negative',
+            message: 'Acceso Denegado',
+            caption: 'No tienes los permisos necesarios para acceder a esta sección.',
+            position: 'top-right',
+            icon: 'gpp_bad'
+          })
+        })
+        
+        // Redirigir al inicio o mantener en la página actual
+        next('/')
+        return
+      }
+    }
+
     next()
   })
 
