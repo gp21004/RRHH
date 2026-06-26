@@ -381,6 +381,6 @@ function handleLogout() {
 /* Eliminar líneas entre items */
 .q-list--separator > .q-item-type + .q-item-type,
 .q-list--separator > .q-virtual-scroll__content > .q-item-type + .q-item-type {
-  border-top: none;
+  border-top: none; 
 }
 </style>
