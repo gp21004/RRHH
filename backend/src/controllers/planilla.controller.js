@@ -1,47 +1,50 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// ─── Helpers de cálculo por tipo de contrato ────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// TIPOS DE CONTRATO (control estricto)
+// ─────────────────────────────────────────────────────────────
 
-/**
- * Determina si el contrato es de "Servicios Profesionales".
- * Se compara en minúsculas para evitar errores de capitalización.
- */
-const esServiciosProfesionales = (tipoContrato = '') =>
-  tipoContrato.toLowerCase().includes('servicio') ||
-  tipoContrato.toLowerCase().includes('profesional');
+const TIPOS_SERVICIOS_PROFESIONALES = [
+  'servicios profesionales',
+  'consultoría'
+];
 
-/**
- * Calcula los descuentos según el tipo de contrato.
- * - Servicios Profesionales: Solo ISR fijo del 10%. ISSS y AFP = null (N/A).
- * - Contrato normal: ISSS + AFP + ISR por tablas legales de El Salvador.
- *
- * Devuelve: { isss, afp, isr, salarioLiquido }
- * Los campos null indican "No Aplica".
- */
+const esServiciosProfesionales = (tipoContrato = '') => {
+  return TIPOS_SERVICIOS_PROFESIONALES.includes(
+    tipoContrato.trim().toLowerCase()
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// CÁLCULO DE DESCUENTOS
+// ─────────────────────────────────────────────────────────────
+
 const calcularDescuentos = (salario, tipoContrato) => {
   if (esServiciosProfesionales(tipoContrato)) {
-    // ── Servicios Profesionales: solo ISR 10% ──────────────────────────────
     const isr = Number((salario * 0.10).toFixed(2));
     const salarioLiquido = Number((salario - isr).toFixed(2));
-    return { isss: null, afp: null, isr, salarioLiquido };
+
+    return {
+      isss: 0,
+      afp: 0,
+      isr,
+      salarioLiquido
+    };
   }
 
-  // ── Contrato normal: ISSS + AFP + ISR por tablas ──────────────────────────
+  // ── CONTRATO NORMAL ─────────────────────────────
 
-  // ISSS (3% con tope de $30)
   const isss = salario > 1000
     ? 30
     : Number((salario * 0.03).toFixed(2));
 
-  // AFP (7.25%)
   const afp = Number((salario * 0.0725).toFixed(2));
 
-  // Base gravable para ISR
   const rentaImponible = Number((salario - isss - afp).toFixed(2));
 
-  // ISR por tablas mensuales El Salvador
   let isr = 0;
+
   if (rentaImponible > 550 && rentaImponible <= 895.24) {
     isr = ((rentaImponible - 550) * 0.10) + 17.67;
   } else if (rentaImponible > 895.24 && rentaImponible <= 2038.10) {
@@ -49,33 +52,38 @@ const calcularDescuentos = (salario, tipoContrato) => {
   } else if (rentaImponible > 2038.10) {
     isr = ((rentaImponible - 2038.10) * 0.30) + 288.57;
   }
+
   isr = Number(isr.toFixed(2));
 
-  const salarioLiquido = Number((salario - isss - afp - isr).toFixed(2));
+  const salarioLiquido = Number(
+    (salario - isss - afp - isr).toFixed(2)
+  );
 
-  return { isss, afp, isr, salarioLiquido };
+  return {
+    isss,
+    afp,
+    isr,
+    salarioLiquido
+  };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// GENERAR PLANILLA
+// ─────────────────────────────────────────────────────────────
 
 const generarPlanillaMensual = async (req, res) => {
   try {
     const contratos = await prisma.contrato.findMany({
-      where: {
-        estado: 'Activo'
-      },
-      include: {
-        empleado: true
-      }
+      where: { estado: 'Activo' },
+      include: { empleado: true }
     });
-
-    console.log('Contratos encontrados:', contratos.length);
 
     const planillaCalculada = contratos.map((contrato) => {
       const salario = Number(contrato.salarioContratado);
       const tipo = contrato.tipoContrato || '';
 
-      const { isss, afp, isr, salarioLiquido } = calcularDescuentos(salario, tipo);
+      const { isss, afp, isr, salarioLiquido } =
+        calcularDescuentos(salario, tipo);
 
       return {
         empleadoId: contrato.empleado.id,
@@ -83,8 +91,8 @@ const generarPlanillaMensual = async (req, res) => {
         tipoContrato: tipo,
         empleadoNombre: `${contrato.empleado.nombres} ${contrato.empleado.apellidos}`,
         salarioBase: salario,
-        isss,           // null = N/A (Servicios Profesionales)
-        afp,            // null = N/A (Servicios Profesionales)
+        isss,
+        afp,
         renta: isr,
         salarioLiquido
       };
@@ -97,6 +105,10 @@ const generarPlanillaMensual = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// GUARDAR HISTORIAL PLANILLA
+// ─────────────────────────────────────────────────────────────
 
 const guardarPlanillaHistorial = async (req, res) => {
   const { mes, anio, detalles } = req.body;
@@ -117,8 +129,8 @@ const guardarPlanillaHistorial = async (req, res) => {
       });
     }
 
-    // Insertar solo los detalles que no existan para este empleado en esta planilla
     const nuevosDetalles = [];
+
     for (const det of detalles) {
       const existe = await prisma.detallePlanilla.findFirst({
         where: {
@@ -126,9 +138,12 @@ const guardarPlanillaHistorial = async (req, res) => {
           empleadoId: det.empleadoId
         }
       });
+
       if (!existe) {
-        // Resolver el contratoId: buscar el contrato vigente si no viene o viene inválido
-        let contratoId = (det.contratoId && det.contratoId > 0) ? det.contratoId : null
+        let contratoId =
+          det.contratoId && det.contratoId > 0
+            ? det.contratoId
+            : null;
 
         if (!contratoId) {
           const contrato = await prisma.contrato.findFirst({
@@ -137,23 +152,21 @@ const guardarPlanillaHistorial = async (req, res) => {
               estado: { in: ['Vigente', 'Activo'] }
             },
             orderBy: { fechaInicio: 'desc' }
-          })
+          });
+
           if (!contrato) {
-            // Último recurso: cualquier contrato del empleado
-            const cualquierContrato = await prisma.contrato.findFirst({
+            const fallback = await prisma.contrato.findFirst({
               where: { empleadoId: det.empleadoId },
               orderBy: { fechaInicio: 'desc' }
-            })
-            contratoId = cualquierContrato?.id
+            });
+
+            contratoId = fallback?.id;
           } else {
-            contratoId = contrato.id
+            contratoId = contrato.id;
           }
         }
 
-        if (!contratoId) {
-          console.warn(`No se encontró contrato para empleadoId ${det.empleadoId}, omitiendo`)
-          continue
-        }
+        if (!contratoId) continue;
 
         nuevosDetalles.push({
           planillaId: planilla.id,
@@ -161,9 +174,9 @@ const guardarPlanillaHistorial = async (req, res) => {
           contratoId,
           empleadoNombre: det.empleadoNombre,
           salarioContratado: det.salarioBase,
-          isss: det.isss,
-          afp: det.afp,
-          renta: det.renta,
+          isss: det.isss ?? 0,
+          afp: det.afp ?? 0,
+          renta: det.renta ?? 0,
           salarioLiquido: det.salarioLiquido
         });
       }
@@ -175,98 +188,106 @@ const guardarPlanillaHistorial = async (req, res) => {
       });
     }
 
-    res.status(201).json({ message: 'Planilla actualizada exitosamente', planilla });
+    res.status(201).json({
+      message: 'Planilla actualizada exitosamente',
+      planilla
+    });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error al guardar el historial' });
+    res.status(500).json({
+      error: 'Error al guardar el historial'
+    });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// VERIFICAR PAGOS
+// ─────────────────────────────────────────────────────────────
 
 const verificarPagos = async (req, res) => {
   try {
     const { mes, anio } = req.params;
-    const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-    
-    // Si mes llega como número (ej: "6"), convertirlo a nombre ("Junio")
-    const mesNumero = parseInt(mes)
-    const mesNombre = (mesNumero >= 1 && mesNumero <= 12) 
-      ? mesesNombres[mesNumero - 1] 
-      : mes  // Si ya viene como texto, usarlo directamente
+
+    const mesesNombres = [
+      'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+    ];
+
+    const mesNumero = parseInt(mes);
+    const mesNombre =
+      mesNumero >= 1 && mesNumero <= 12
+        ? mesesNombres[mesNumero - 1]
+        : mes;
 
     const planilla = await prisma.planilla.findFirst({
       where: { mes: mesNombre, anio: parseInt(anio) },
       include: { detalles: true }
     });
 
-    if (!planilla) {
-      return res.json([]);
-    }
+    if (!planilla) return res.json([]);
 
     const empleadosPagados = planilla.detalles.map(d => d.empleadoId);
     res.json(empleadosPagados);
+
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Error al verificar pagos' });
   }
 };
 
-// Obtener lista de todas las planillas guardadas
+// ─────────────────────────────────────────────────────────────
+// HISTORIAL
+// ─────────────────────────────────────────────────────────────
+
 const obtenerHistorial = async (req, res) => {
   try {
-    const historial =
-      await prisma.planilla.findMany({
-        include: {
-          detalles: {
-            include: {
-              empleado: {
-                include: {
-                  departamento: true
-                }
-              }
+    const historial = await prisma.planilla.findMany({
+      include: {
+        detalles: {
+          include: {
+            empleado: {
+              include: { departamento: true }
             }
           }
-        },
-        orderBy: {
-          fechaGeneracion: 'desc'
         }
-      });
+      },
+      orderBy: { fechaGeneracion: 'desc' }
+    });
 
     res.status(200).json(historial);
 
   } catch (error) {
-    res.status(500).json({
-      error: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Obtener una planilla específica con sus detalles
+// ─────────────────────────────────────────────────────────────
+// DETALLE PLANILLA
+// ─────────────────────────────────────────────────────────────
+
 const obtenerDetalleHistorial = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const planilla =
-      await prisma.planilla.findUnique({
-        where: {
-          id: parseInt(id)
-        },
-        include: {
-          detalles: true
-        }
-      });
+    const planilla = await prisma.planilla.findUnique({
+      where: { id: parseInt(id) },
+      include: { detalles: true }
+    });
 
     res.status(200).json(planilla);
 
   } catch (error) {
-    res.status(500).json({
-      error: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// DETALLE EMPLEADO
+// ─────────────────────────────────────────────────────────────
+
 const obtenerDetalleEmpleadoPlanilla = async (req, res) => {
   try {
-    const { planillaId, empleadoId } = req.params
+    const { planillaId, empleadoId } = req.params;
 
     const detalle = await prisma.detallePlanilla.findFirst({
       where: {
@@ -274,131 +295,96 @@ const obtenerDetalleEmpleadoPlanilla = async (req, res) => {
         empleadoId: Number(empleadoId)
       },
       include: {
-        empleado: {
-          include: {
-            departamento: true
-          }
-        },
+        empleado: { include: { departamento: true } },
         contrato: true,
         planilla: true
       }
-    })
+    });
 
     if (!detalle) {
       return res.status(404).json({
         error: 'No se encontró el detalle del empleado'
-      })
+      });
     }
 
     res.status(200).json({
       id: detalle.id,
-
       nombre: detalle.empleadoNombre,
-
       cargo: detalle.contrato?.cargo || '',
-
-      departamento:
-        detalle.empleado?.departamento?.nombre || '',
-
-      periodo:
-        `${detalle.planilla.mes} ${detalle.planilla.anio}`,
-
+      departamento: detalle.empleado?.departamento?.nombre || '',
+      periodo: `${detalle.planilla.mes} ${detalle.planilla.anio}`,
       cedula: detalle.empleado?.dui || '',
-
       email: detalle.empleado?.correo || '',
-
       telefono: detalle.empleado?.telefono || '',
-
       salarioBase: Number(detalle.salarioContratado),
-
-      isss: Number(detalle.isss),
-
-      afp: Number(detalle.afp),
-
-      isr: Number(detalle.renta),
-
+      isss: Number(detalle.isss ?? 0),
+      afp: Number(detalle.afp ?? 0),
+      isr: Number(detalle.renta ?? 0),
       netoAPagar: Number(detalle.salarioLiquido),
-
       fechaGeneracion: detalle.planilla.fechaGeneracion
-    })
+    });
 
   } catch (error) {
-    console.error(error)
-
-    res.status(500).json({
-      error: error.message
-    })
+    res.status(500).json({ error: error.message });
   }
-}
+};
+
+// ─────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────
+
 const obtenerEstadisticasDashboard = async (req, res) => {
   try {
-
     const planillas = await prisma.planilla.findMany({
-      include: {
-        detalles: true
-      },  
-      orderBy: {
-        fechaGeneracion: 'desc'
-      }
-    })
+      include: { detalles: true },
+      orderBy: { fechaGeneracion: 'desc' }
+    });
 
-    const totalPagado = planillas.reduce((total, planilla) => {
-      return total + planilla.detalles.reduce(
-        (suma, det) => suma + Number(det.salarioLiquido),
-        0
-      )
-    }, 0)
+    const totalPagado = planillas.reduce(
+      (t, p) => t + p.detalles.reduce(
+        (s, d) => s + Number(d.salarioLiquido), 0
+      ), 0
+    );
 
-    const totalISSS = planillas.reduce((total, planilla) => {
-      return total + planilla.detalles.reduce(
-        (suma, det) => suma + Number(det.isss),
-        0
-      )
-    }, 0)
+    const totalISSS = planillas.reduce(
+      (t, p) => t + p.detalles.reduce(
+        (s, d) => s + (d.isss ?? 0), 0
+      ), 0
+    );
 
-    const totalAFP = planillas.reduce((total, planilla) => {
-      return total + planilla.detalles.reduce(
-        (suma, det) => suma + Number(det.afp),
-        0
-      )
-    }, 0)
+    const totalAFP = planillas.reduce(
+      (t, p) => t + p.detalles.reduce(
+        (s, d) => s + (d.afp ?? 0), 0
+      ), 0
+    );
 
-    const totalRenta = planillas.reduce((total, planilla) => {
-      return total + planilla.detalles.reduce(
-        (suma, det) => suma + Number(det.renta),
-        0
-      )
-    }, 0)
+    const totalRenta = planillas.reduce(
+      (t, p) => t + p.detalles.reduce(
+        (s, d) => s + (d.renta ?? 0), 0
+      ), 0
+    );
 
-    const ultimaPlanilla = planillas[0]
+    const ultimaPlanilla = planillas[0];
 
-    let resumenMes = null
+    let resumenMes = null;
 
     if (ultimaPlanilla) {
       resumenMes = {
         mes: ultimaPlanilla.mes,
         anio: ultimaPlanilla.anio,
-
         totalPagado: ultimaPlanilla.detalles.reduce(
-          (suma, d) => suma + Number(d.salarioLiquido),
-          0
+          (s, d) => s + Number(d.salarioLiquido), 0
         ),
-
         isss: ultimaPlanilla.detalles.reduce(
-          (suma, d) => suma + Number(d.isss),
-          0
+          (s, d) => s + (d.isss ?? 0), 0
         ),
-
         afp: ultimaPlanilla.detalles.reduce(
-          (suma, d) => suma + Number(d.afp),
-          0
+          (s, d) => s + (d.afp ?? 0), 0
         ),
-
         renta: ultimaPlanilla.detalles.reduce(
-          (suma, d) => suma + Number(d.renta),
-          0
+          (s, d) => s + (d.renta ?? 0), 0
         )
-      }
+      };
     }
 
     res.json({
@@ -407,15 +393,14 @@ const obtenerEstadisticasDashboard = async (req, res) => {
       totalAFP,
       totalRenta,
       resumenMes
-    })
+    });
 
   } catch (error) {
-    res.status(500).json({
-      error: error.message
-    })
+    res.status(500).json({ error: error.message });
   }
-}
+};
 
+// ─────────────────────────────────────────────────────────────
 
 module.exports = {
   generarPlanillaMensual,
