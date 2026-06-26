@@ -181,6 +181,7 @@
                     required
                     @update:model-value="calcularHorasSemanales"
                   />
+                  
                 </div>
                 <div class="col-12 col-md-3">
                   <q-input 
@@ -454,7 +455,7 @@ const filtroEmpleado = ref('')
 const filtroEstado = ref(null)
 const filtroVencer = ref(false)
 
-const tiposContrato = ['Por tiempo indefinido', 'Contrato Temporal', 'Por Proyecto', 'Pasantía', 'Consultoría']
+const tiposContrato = ['Por tiempo indefinido', 'Contrato Temporal', 'Por Proyecto', 'Pasantía', 'Consultoría','Servicios Profesionales']
 const estadosContrato = ['Activo', 'Pendiente', 'Finalizado', 'Pausado']
 
 // Estados terminales que no permiten cambios
@@ -924,7 +925,7 @@ const contratosActivos = computed(() => {
 })
 
 const pendientesFirma = computed(() => {
-  return listaContratos.value.filter(c => c.estado === 'Pendiente').length
+  return listaContratos.value.filter(c => c.estado === 'Borrador').length
 })
 
 const finalizados = computed(() => {
