@@ -251,12 +251,6 @@
                   />
                 </div>
                 <q-space />
-                <div class="col-auto" v-if="!editando">
-                  <q-btn label="Subir Formulario" color="positive" flat />
-                </div>
-                <div class="col-auto" v-if="!editando">
-                  <q-btn label="Generar PDF" color="info" @click="generarPDF(contrato.id)"/>
-                </div>
                 <div class="col-auto">
                   <q-btn 
                     :label="editando ? 'Actualizar Contrato' : 'Guardar Contrato'" 
@@ -377,17 +371,6 @@
                 flat 
                 dense 
                 round 
-                icon="picture_as_pdf" 
-                size="sm" 
-                color="info"
-                :loading="descargandoPDF === props.row.id"
-                @click="descargarPDF(props.row.id)"
-                title="Descargar PDF"
-              />
-              <q-btn 
-                flat 
-                dense 
-                round 
                 icon="edit" 
                 size="sm" 
                 color="warning"
@@ -420,7 +403,6 @@ const router = useRouter()
 
 const cargando = ref(true)
 const editando = ref(false)
-const descargandoPDF = ref(null)
 let contratoEnEdicion = null
 
 // Estado del formulario
@@ -470,7 +452,7 @@ const empleadosDisponibles = computed(() => {
 const listaContratos = ref([])
 const filtroEmpleado = ref('')
 const filtroEstado = ref(null)
-const filtroVencer = ref(false) // Nuevo filtro para contratos por vencer en 30 días
+const filtroVencer = ref(false)
 
 const tiposContrato = ['Por tiempo indefinido', 'Contrato Temporal', 'Por Proyecto', 'Pasantía', 'Consultoría']
 const estadosContrato = ['Activo', 'Pendiente', 'Finalizado', 'Pausado']
@@ -495,7 +477,6 @@ const columnasContratos = [
   { name: 'fechaFin', label: 'Fecha Fin', field: 'fechaFin', align: 'center' },
   { name: 'salarioContratado', label: 'Salario', field: 'salarioContratado', align: 'right', sortable: true },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center', sortable: true },
-  { name: 'pdf', label: 'Generar PDF', field: 'pdf', align: 'center' },
   { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ]
 
@@ -510,7 +491,6 @@ const getInitials = (nombre) => {
   return primerNombre + primerApellido
 }
 
-// NUEVA FUNCIÓN IGUAL A LAS OTRAS PAGES
 const getAvatarColor = (nombre) => {
   if (!nombre) return '#3b82f6'
   
@@ -552,6 +532,7 @@ const cargarEmpleados = async () => {
     console.error('Error al cargar empleados:', error)
   }
 }
+
 const cargarContratos = async () => {
   try {
     cargando.value = true
@@ -569,6 +550,7 @@ const cargarContratos = async () => {
     cargando.value = false
   }
 }
+
 const cargarDatosEmpleado = () => {
   if (empleadoSeleccionado.value) {
     const empleado = empleadoSeleccionado.value
@@ -670,11 +652,12 @@ const guardarContrato = async () => {
     const data = await res.json()
 
     if (res.ok) {
+      // MENSAJE MODIFICADO SEGÚN REQUISITOS
       $q.notify({
         type: 'positive',
-        message: `Contrato creado exitosamente para ${empleadoSeleccionado.value.nombres}`,
+        message: `Contrato guardado como borrador para ${empleadoSeleccionado.value.nombres}.\n\nPara finalizar el proceso debes ingresar al Detalle del Contrato, generar el PDF, obtener la firma del empleado y subir el contrato firmado.`,
         position: 'top',
-        timeout: 3000
+        timeout: 5000
       })
       await cargarContratos()
       limpiarFormulario()
@@ -706,8 +689,7 @@ const verContrato = (contrato) => {
 }
 
 const editarContrato = (contrato) => {
-  console.log('[v0] Editando contrato:', contrato)
-    if (
+  if (
     ['Finalizado', 'Despedido', 'Renuncia'].includes(
       contrato.estado
     )
@@ -740,7 +722,6 @@ const editarContrato = (contrato) => {
     clausulas: contrato.clausulas
   }
   
-  console.log('[v0] Datos del formulario cargados para edición')
   editando.value = true
   
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -769,9 +750,6 @@ const actualizarContrato = async () => {
       clausulas: formulario.value.clausulas
     }
 
-    console.log('[v0] Actualizando contrato con ID:', contratoEnEdicion.id)
-    console.log('[v0] Datos enviados:', body)
-
     const res = await fetch(`http://localhost:3000/api/contratos/${contratoEnEdicion.id}`, {
       method: 'PATCH',
       headers: {
@@ -792,7 +770,6 @@ const actualizarContrato = async () => {
       cancelarEdicion()
       await cargarContratos()
     } else {
-      console.error('[v0] Error en respuesta:', data)
       $q.notify({
         type: 'negative',
         message: data.message || 'Error al actualizar contrato'
@@ -800,7 +777,7 @@ const actualizarContrato = async () => {
     }
 
   } catch (error) {
-    console.error('[v0] Error en actualizarContrato:', error)
+    console.error('Error en actualizarContrato:', error)
     $q.notify({
       type: 'negative',
       message: 'Error al actualizar contrato'
@@ -875,37 +852,6 @@ const cambiarEstadoContrato = (contrato) => {
       })
     }
   })
-}
-
-// Método para descargar PDF
-const descargarPDF = async (id) => {
-  descargandoPDF.value = id
-  try {
-    const urlPDF = `http://localhost:3000/api/contratos/${id}/pdf`
-    
-    // Crear elemento <a> para descargar
-    const link = document.createElement('a')
-    link.href = urlPDF
-    link.download = `contrato-${id}.pdf`
-    link.click()
-    
-    $q.notify({
-      type: 'positive',
-      message: 'PDF descargado exitosamente',
-      position: 'top',
-      timeout: 2000
-    })
-  } catch (error) {
-    console.error('Error al descargar PDF:', error)
-    $q.notify({
-      type: 'negative',
-      message: 'Error al descargar PDF',
-      position: 'top',
-      timeout: 3000
-    })
-  } finally {
-    descargandoPDF.value = null
-  }
 }
 
 onMounted(async () => {
@@ -1034,28 +980,6 @@ const contratosFiltrados = computed(() => {
     return coincideEmpleado && coincideEstado && coincideVencer
   })
 })
-const generarPDF = async () => {
-  const body = {
-    empleado: formulario.value.empleado,
-    cargo: formulario.value.cargo,
-    salario: formulario.value.salarioContratado,
-    horario: formulario.value.horario,
-    clausulas: formulario.value.clausulas
-  }
-
-  const res = await fetch('http://localhost:3000/api/contratos/preview-pdf', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
-
-  const blob = await res.blob()
-  const url = window.URL.createObjectURL(blob)
-
-  window.open(url, '_blank')
-}
 </script>
 
 <style scoped>

@@ -87,15 +87,6 @@
                 :title="esEstadoTerminal ? `No se puede cambiar estado desde ${contrato.estado}` : ''"
                 unelevated
               />
-              <q-btn
-                color="info"
-                icon="picture_as_pdf"
-                label="Generar PDF"
-                size="md"
-                :loading="descargandoPDF"
-                @click="generarPDF"
-                unelevated
-              />
             </div>
           </div>
 
@@ -175,8 +166,6 @@
               <span class="info-value">${{ formatSalario(contrato.salarioContratado) }}</span>
             </div>
 
-
-
             <div class="info-item">
               <div class="info-label">
                 <q-icon name="school" size="sm" class="text-warning q-mr-sm" />
@@ -237,6 +226,61 @@
         </q-card>
       </div>
 
+      <!-- NUEVA TARJETA: Documento del Contrato -->
+      <div class="col-12">
+        <q-card flat bordered class="info-card">
+          <q-card-section>
+            <div class="section-header q-mb-md">
+              <q-icon name="description" size="md" class="text-primary q-mr-md" />
+              <span class="text-h6 text-weight-bold">Documento del Contrato</span>
+            </div>
+
+            <div class="document-status q-mb-lg">
+              <div class="status-badge">
+                <q-icon name="info" size="sm" class="q-mr-sm" />
+                <span>Sin documento firmado</span>
+              </div>
+            </div>
+
+            <div class="document-description q-mb-lg">
+              <p class="description-text">
+                Este contrato fue guardado como borrador.
+              </p>
+              <p class="description-text">
+                Para completar el proceso:
+              </p>
+              <ol class="process-list">
+                <li>Genera el PDF.</li>
+                <li>Imprímelo.</li>
+                <li>Obtén la firma del empleado.</li>
+                <li>Sube el contrato firmado.</li>
+              </ol>
+            </div>
+
+            <div class="document-buttons">
+              <q-btn
+                color="info"
+                icon="picture_as_pdf"
+                label="Generar PDF"
+                :loading="descargandoPDF"
+                @click="generarPDF"
+                unelevated
+                class="q-mr-md"
+              />
+              <!-- BACKEND PLACEHOLDER: Subir Contrato Firmado -->
+              <!-- TODO: Conectar con endpoint para subir archivo PDF firmado -->
+              <q-btn
+                color="positive"
+                icon="cloud_upload"
+                label="Subir Contrato Firmado"
+                @click="subirContratoFirmado"
+                unelevated
+              />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
     </div>
 
   </q-page>
@@ -284,7 +328,6 @@ import { useQuasar } from 'quasar'
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
-
 
 const cargando = ref(false)
 const contrato = ref({})
@@ -385,7 +428,6 @@ const parsearDiasLaborales = (dias) => {
 }
 
 const editarContrato = () => {
-
   // Guardar contrato temporalmente
   sessionStorage.setItem(
     'contratoEditar',
@@ -474,6 +516,77 @@ const generarPDF = async () => {
   }
 }
 
+const subirContratoFirmado = async () => {
+  try {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/pdf'
+
+    input.onchange = async (event) => {
+      try {
+        const file = event.target.files[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf') {
+          $q.notify({
+            type: 'negative',
+            message: 'Solo PDF permitido',
+            position: 'top'
+          })
+          return
+        }
+
+        const formData = new FormData()
+        formData.append('archivo', file)
+
+        console.log('📤 Enviando archivo...', file.name)
+
+        const res = await fetch(
+          `http://localhost:3000/api/documentos/contratos/${contrato.value.id}/documento`,
+          {
+            method: 'POST',
+            body: formData
+          }
+        )
+
+        console.log('📡 Response status:', res.status)
+
+        if (!res.ok) {
+          const errorText = await res.text()
+          console.error('❌ Error backend:', errorText)
+
+          throw new Error('Error al subir contrato')
+        }
+
+        const data = await res.json()
+        console.log('✅ Backend response:', data)
+
+        $q.notify({
+          type: 'positive',
+          message: 'Contrato subido correctamente',
+          position: 'top'
+        })
+
+        await cargarContrato()
+
+      } catch (err) {
+        console.error('❌ Error interno upload:', err)
+
+        $q.notify({
+          type: 'negative',
+          message: 'Error al subir contrato',
+          position: 'top'
+        })
+      }
+    }
+
+    input.click()
+
+  } catch (error) {
+    console.error('❌ Error general:', error)
+  }
+}
+
 onMounted(async () => {
   cargando.value = true
   await cargarContrato()
@@ -557,6 +670,52 @@ onMounted(async () => {
 .clauses-text {
   color: #ffffff;
   line-height: 1.6;
+}
+
+/* ESTILOS PARA LA TARJETA DE DOCUMENTO DEL CONTRATO */
+.document-status {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid #3b82f6;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.document-description {
+  background: rgba(100, 150, 255, 0.05);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(100, 150, 255, 0.1);
+}
+
+.description-text {
+  color: #e5e7eb;
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.process-list {
+  color: #e5e7eb;
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.process-list li {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.document-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* LOADING ANIMATIONS */

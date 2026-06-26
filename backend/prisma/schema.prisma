@@ -103,6 +103,7 @@ model Contrato {
   detallePlanillas DetallePlanilla[]
   // Relación con Empleado (un empleado puede tener muchos contratos a lo largo del tiempo)
   empleado         Empleado          @relation(fields: [empleadoId], references: [id])
+  documentos ContratoDocumento[]
 }
 
 model Marcacion {
@@ -114,4 +115,23 @@ model Marcacion {
   estado      String    @default("Presente") // Presente, Ausente, Tardanza
   
   empleado    Empleado  @relation(fields: [empleadoId], references: [id])
+}
+model ContratoDocumento {
+  id              Int       @id @default(autoincrement())
+
+  contratoId      Int       
+  contrato        Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  nombreArchivo   String
+  nombreOriginal  String
+  rutaArchivo     String
+  tipoMime        String
+  tamano          Int
+
+  tipo            String    @default("CONTRATO_FIRMADO")
+
+  fechaSubida     DateTime  @default(now())
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
