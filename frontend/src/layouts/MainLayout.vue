@@ -13,34 +13,6 @@
 
         <!-- Acciones Header -->
         <div class="flex items-center gap-md">
-          <!-- Notificaciones -->
-          <q-btn flat dense round icon="notifications" class="text-white">
-            <q-badge color="red" floating rounded size="sm">3</q-badge>
-            <q-menu anchor="bottom right" self="top right">
-              <q-list style="min-width: 300px">
-                <q-item clickable v-ripple>
-                  <q-item-section avatar>
-                    <q-icon name="check_circle" color="green" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Pago procesado</q-item-label>
-                    <q-item-label caption>Hace 2 minutos</q-item-label>
-                  </q-item-section>
-                </q-item>
-                <q-separator />
-                <q-item clickable v-ripple>
-                  <q-item-section avatar>
-                    <q-icon name="warning" color="orange" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Contrato pendiente</q-item-label>
-                    <q-item-label caption>Hace 1 hora</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-
           <!-- Perfil Usuario -->
           <q-btn flat dense round>
             <q-avatar size="40px" color="primary" text-color="white">
@@ -128,22 +100,6 @@
               </q-item-section>
               <q-item-section>
                 <q-item-label>Gestionar Pagos</q-item-label>
-              </q-item-section>
-            </q-item>
-
-            <q-item
-              clickable
-              v-ripple
-              to="/invoices"
-              :active="$route.path === '/invoices'"
-              active-class="menu-active"
-              class="rounded-borders q-mb-sm"
-            >
-              <q-item-section avatar>
-                <q-icon name="receipt" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>Facturas</q-item-label>
               </q-item-section>
             </q-item>
 
@@ -425,6 +381,6 @@ function handleLogout() {
 /* Eliminar líneas entre items */
 .q-list--separator > .q-item-type + .q-item-type,
 .q-list--separator > .q-virtual-scroll__content > .q-item-type + .q-item-type {
-  border-top: none;
+  border-top: none; 
 }
 </style>
