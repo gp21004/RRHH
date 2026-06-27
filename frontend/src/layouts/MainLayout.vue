@@ -156,22 +156,6 @@
               </q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              v-ripple
-              to="/planillas"
-              :active="$route.path === '/planillas'"
-              active-class="menu-active"
-              class="rounded-borders q-mb-md"
-            >
-              <q-item-section avatar>
-                <q-icon name="table_chart" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>Planillas</q-item-label>
-              </q-item-section>
-            </q-item>
-
             <!-- Sección Usuarios (solo admin) -->
             <template v-if="userRole === 'admin' || userRole === 'supervisor'">
               <q-item-label header class="text-uppercase text-weight-bold text-grey">

@@ -133,13 +133,13 @@
         </div>
 
         <div class="col-12 col-sm-6 col-md-3">
-          <q-card class="module-card cursor-pointer" @click="$router.push('/planillas')">
+          <q-card class="module-card cursor-pointer" @click="$router.push('/gestion-pago')">
             <q-card-section class="text-center q-pa-md">
               <q-avatar size="56px" style="background: #E8F5E9">
                 <q-icon name="request_quote" size="32px" color="positive" />
               </q-avatar>
-              <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mt-md">Generación de Planillas</h3>
-              <p class="text-caption text-grey-7 q-mt-md q-mb-none">Calcula ISSS, AFP y Renta automáticamente. Genera planillas.</p>
+              <h3 class="text-h6 text-weight-bold text-white q-ma-none q-mt-md">Gestión de Pago </h3>
+              <p class="text-caption text-grey-7 q-mt-md q-mb-none">Calcula Renta, ISS, AFP y otras deduciones. Genera tus planillas aqui.</p>
               <q-btn flat color="positive" label="Acceder" size="sm" icon-right="arrow_forward" class="q-mt-md" />
             </q-card-section>
           </q-card>
