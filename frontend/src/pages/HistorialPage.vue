@@ -217,6 +217,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { generarPlanillaPDF } from 'src/utils/pdfGenerator'
 
 const router = useRouter()
 
@@ -281,6 +282,8 @@ const cargarHistorial = async () => {
   } finally { loading.value = false }
 }
 
+const planillaSeleccionada = ref(null)
+
 const verPlanilla = (id) => {
   router.push({
     name: 'detalle-planilla',
@@ -289,9 +292,12 @@ const verPlanilla = (id) => {
 }
 
 const descargarPDF = (id) => {
-  // Implementar descarga de PDF
-  console.log('Descargar PDF:', id)
-  window.print()
+  const planilla = historial.value.find(p => p.id === id)
+  if (planilla) {
+    generarPlanillaPDF(planilla, 'download')
+  } else {
+    console.error('Planilla no encontrada:', id)
+  }
 }
 
 onMounted(cargarHistorial)

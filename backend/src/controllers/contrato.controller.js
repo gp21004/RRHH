@@ -207,7 +207,8 @@ const obtenerContratoPorId = async (req, res) => {
           include: {
             departamento: true
           }
-        }
+        },
+        documentos: true
       }
     });
 

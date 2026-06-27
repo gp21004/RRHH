@@ -226,6 +226,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { generarPlanillaPDF } from 'src/utils/pdfGenerator'
 
 
 
@@ -307,14 +308,11 @@ const cargarPlanilla = async () => {
 }
 
 const imprimirPDF = () => {
-  window.print()
+  generarPlanillaPDF(planilla.value, 'print')
 }
 
 const exportarPDF = () => {
-  $q.notify({
-    type: 'info',
-    message: 'Funcionalidad de exportar PDF próximamente disponible'
-  })
+  generarPlanillaPDF(planilla.value, 'download')
 }
 
 const verDetalleEmpleado = (empleadoId) => {
@@ -459,40 +457,45 @@ onMounted(cargarPlanilla)
 @media print {
   @page {
     size: letter landscape;
-    margin: 15mm;
+    margin: 10mm;
+  }
+
+  body, html, .q-page {
+    background-color: white !important;
+  }
+
+  * {
+    color: black !important;
+    text-shadow: none !important;
   }
 
   .q-page {
-    padding: 10mm !important;
+    padding: 0 !important;
   }
 
-  :deep(q-btn) {
-    display: none !important;
-  }
-
+  .row.q-gutter-md.justify-center.q-mb-lg, 
+  .q-btn, 
   .row.items-center.justify-between {
     display: none !important;
   }
 
-  .q-card {
-    page-break-inside: avoid;
+  .info-card, .info-field, .total-card, .q-card {
+    background-color: transparent !important;
+    border: 1px solid #ccc !important;
     box-shadow: none !important;
-    border: 1px solid #ddd !important;
-  }
-
-  .tabla-planilla {
-    font-size: 10pt;
-
-    :deep(th) {
-      background-color: var(--q-primary) !important;
-      color: white !important;
-      -webkit-print-color-adjust: exact;
-    }
-  }
-
-  .total-card {
-    border: 1px solid #999 !important;
+    page-break-inside: avoid;
   }
   
+  .tabla-planilla {
+    font-size: 10pt;
+    border: 1px solid #ccc !important;
+  }
+
+  .tabla-planilla :deep(th),
+  .tabla-planilla :deep(td) {
+    border-bottom: 1px solid #ccc !important;
+    color: black !important;
+    background-color: transparent !important;
+  }
 }
 </style>
