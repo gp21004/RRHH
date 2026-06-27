@@ -216,11 +216,14 @@ const pagination = ref({
   rowsPerPage: 10
 })
 
+const mesesArray = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const fechaActual = new Date()
+
 // Filtros
 const filtroEmpleado = ref('')
 const filtroDepartamento = ref('Todos')
-const filtroAnio = ref('Todos')
-const filtroMes = ref('Todos')
+const filtroAnio = ref(fechaActual.getFullYear())
+const filtroMes = ref(mesesArray[fechaActual.getMonth()])
 
 const formatDinero = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0)
 
@@ -249,7 +252,7 @@ const transaccionesFiltradas = computed(() => {
   return transacciones.value.filter(t => {
     const coincideEmpleado = !filtroEmpleado.value || t.empleadoNombre.toLowerCase().includes(filtroEmpleado.value.toLowerCase())
     const coincideDepto = filtroDepartamento.value === 'Todos' || t.departamento === filtroDepartamento.value
-    const coincideAnio = filtroAnio.value === 'Todos' || t.planillaAnio === filtroAnio.value
+    const coincideAnio = filtroAnio.value === 'Todos' || Number(t.planillaAnio) === Number(filtroAnio.value)
     const coincideMes = filtroMes.value === 'Todos' || t.planillaMes === filtroMes.value
     
     return coincideEmpleado && coincideDepto && coincideAnio && coincideMes
@@ -270,8 +273,8 @@ const totales = computed(() => {
 const limpiarFiltros = () => {
   filtroEmpleado.value = ''
   filtroDepartamento.value = 'Todos'
-  filtroAnio.value = 'Todos'
-  filtroMes.value = 'Todos'
+  filtroAnio.value = fechaActual.getFullYear()
+  filtroMes.value = mesesArray[fechaActual.getMonth()]
 }
 
 const cargarHistorial = async () => {
