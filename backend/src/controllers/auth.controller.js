@@ -90,14 +90,18 @@ const login = async (req, res) => {
 const getPerfil = async (req, res) => {
   try {
     const usuario = await prisma.usuario.findUnique({
-      where: { id: req.usuario.id }
+      where: { id: req.usuario.id },
+      include: { rol: true }
     });
 
     if (!usuario) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    const { password: _, ...usuarioSinPassword } = usuario;
+    const rolNombre = usuario.rol ? usuario.rol.nombre : 'Administrador';
+    const { password: _, rol, ...usuarioSinPassword } = usuario;
+    usuarioSinPassword.rol = rolNombre;
+
     res.json(usuarioSinPassword);
   } catch (error) {
     console.error('Error al obtener perfil:', error);

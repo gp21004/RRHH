@@ -143,10 +143,21 @@
               :rules="[val => !!val || 'El nombre es requerido']"
             />
 
-            <!-- Correo / Username -->
+            <!-- Username (Login) -->
+            <q-input
+              v-model="userForm.username"
+              label="Nombre de Usuario (Login)"
+              outlined
+              dense
+              dark
+              color="primary"
+              :rules="[val => !!val || 'El nombre de usuario es requerido']"
+            />
+
+            <!-- Correo -->
             <q-input
               v-model="userForm.correo"
-              label="Correo Electrónico (Usuario)"
+              label="Correo Electrónico"
               type="email"
               outlined
               dense
@@ -180,7 +191,7 @@
             <q-select
               v-model="userForm.rol"
               :options="roles"
-              option-value="nombre"
+              option-value="id"
               option-label="nombre"
               emit-value
               map-options
@@ -272,6 +283,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
+import { useAuth } from 'src/stores/auth'
 
 const $q = useQuasar()
 
@@ -285,6 +297,7 @@ const showPassword = ref(false)
 const userForm = ref({
   id: null,
   nombreCompleto: '',
+  username: '',
   correo: '',
   password: '',
   rol: null
@@ -316,7 +329,8 @@ const modulosDisponibles = [
 // Columnas Tabla Usuarios
 const userColumns = [
   { name: 'nombreCompleto', align: 'left', label: 'Nombre Completo', field: 'nombreCompleto', sortable: true },
-  { name: 'correo', align: 'left', label: 'Correo (Usuario)', field: 'correo', sortable: true },
+  { name: 'username', align: 'left', label: 'Usuario', field: 'username', sortable: true },
+  { name: 'correo', align: 'left', label: 'Correo', field: 'correo', sortable: true },
   { name: 'rol', align: 'left', label: 'Rol Asignado', field: 'rol', sortable: true },
   { name: 'acciones', align: 'right', label: 'Acciones', field: 'acciones' }
 ]
@@ -329,19 +343,38 @@ const roleColumns = [
   { name: 'acciones', align: 'right', label: 'Acciones', field: 'acciones' }
 ]
 
-// Datos MOCK de roles
-const roles = ref([
-  { id: 1, nombre: 'Administrador', descripcion: 'Acceso total.', permisos: ['dashboard', 'contratacion', 'planillas', 'historial', 'transacciones', 'contratos', 'configuracion', 'gestion-pagos'], isDefault: true },
-  { id: 2, nombre: 'Recursos Humanos', descripcion: 'Gestión de personal.', permisos: ['dashboard', 'contratacion', 'planillas', 'contratos'], isDefault: false },
-  { id: 3, nombre: 'Finanzas', descripcion: 'Acceso a pagos.', permisos: ['dashboard', 'historial', 'transacciones', 'gestion-pagos'], isDefault: false }
-])
+const roles = ref([])
+const usuarios = ref([])
 
-// Datos MOCK de usuarios
-const usuarios = ref([
-  { id: 1, nombreCompleto: 'Kevin Administrador', correo: 'admin@gestionpro.com', rol: 'Administrador' },
-  { id: 2, nombreCompleto: 'María Lopez', correo: 'mlopez@gestionpro.com', rol: 'Recursos Humanos' },
-  { id: 3, nombreCompleto: 'Carlos Ruiz', correo: 'cruiz@gestionpro.com', rol: 'Finanzas' }
-])
+const API_URL = 'http://localhost:3000/api'
+const { state } = useAuth()
+
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${state.token}`
+})
+
+const cargarRoles = async () => {
+  try {
+    const res = await fetch(`${API_URL}/roles`, { headers: getHeaders() })
+    if (res.ok) {
+      roles.value = await res.json()
+    }
+  } catch (error) {
+    console.error('Error cargando roles', error)
+  }
+}
+
+const cargarUsuarios = async () => {
+  try {
+    const res = await fetch(`${API_URL}/usuarios`, { headers: getHeaders() })
+    if (res.ok) {
+      usuarios.value = await res.json()
+    }
+  } catch (error) {
+    console.error('Error cargando usuarios', error)
+  }
+}
 
 // --- MÉTODOS ---
 
@@ -359,31 +392,34 @@ const openUserModal = (user = null) => {
     userForm.value = { ...user, password: '' } // no enviamos el password al form
   } else {
     isEditingUser.value = false
-    userForm.value = { id: null, nombreCompleto: '', correo: '', password: '', rol: null }
+    userForm.value = { id: null, nombreCompleto: '', username: '', correo: '', password: '', rol: null }
   }
   showUserModal.value = true
 }
 
 const saveUser = async () => {
   try {
-    // --- Lógica MOCK ---
-    // TODO: Reemplazar con llamada al backend (POST/PUT a /api/usuarios)
-    if (isEditingUser.value) {
-      const index = usuarios.value.findIndex(u => u.id === userForm.value.id)
-      if (index !== -1) {
-        // En la vida real, solo actualizas password si no viene vacío
-        usuarios.value[index] = { ...userForm.value }
-      }
-    } else {
-      const newId = usuarios.value.length > 0 ? Math.max(...usuarios.value.map(u => u.id)) + 1 : 1
-      usuarios.value.push({ ...userForm.value, id: newId })
+    const payload = { ...userForm.value }
+    if (isEditingUser.value && !payload.password) {
+      delete payload.password // No enviar si está vacío
     }
 
+    const res = await fetch(`${API_URL}/usuarios${isEditingUser.value ? '/' + payload.id : ''}`, {
+      method: isEditingUser.value ? 'PUT' : 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload)
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) throw new Error(data.error || 'Error al guardar el usuario')
+
+    await cargarUsuarios()
     showUserModal.value = false
     $q.notify({ type: 'positive', message: isEditingUser.value ? 'Usuario actualizado correctamente.' : 'Usuario creado exitosamente.' })
   } catch (error) {
     console.error('Error guardando usuario:', error)
-    $q.notify({ type: 'negative', message: 'Error al guardar el usuario.' })
+    $q.notify({ type: 'negative', message: error.message || 'Error al guardar el usuario.' })
   }
 }
 
@@ -396,11 +432,22 @@ const confirmDeleteUser = (user) => {
     ok: { label: 'Eliminar', color: 'negative', unelevated: true },
     dark: true,
     persistent: true
-  }).onOk(() => {
-    // --- Lógica MOCK ---
-    // TODO: Reemplazar con llamada al backend (DELETE)
-    usuarios.value = usuarios.value.filter(u => u.id !== user.id)
-    $q.notify({ type: 'positive', message: 'Usuario eliminado correctamente.' })
+  }).onOk(async () => {
+    try {
+      const res = await fetch(`${API_URL}/usuarios/${user.id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al eliminar')
+      }
+      await cargarUsuarios()
+      $q.notify({ type: 'positive', message: 'Usuario eliminado correctamente.' })
+    } catch (error) {
+      console.error(error)
+      $q.notify({ type: 'negative', message: error.message || 'Error al eliminar el usuario.' })
+    }
   })
 }
 
@@ -418,23 +465,21 @@ const openRoleModal = (rol = null) => {
 
 const saveRole = async () => {
   try {
-    // --- Lógica MOCK ---
-    // TODO: Reemplazar con llamada al backend (POST/PUT a /api/roles)
-    if (isEditingRole.value) {
-      const index = roles.value.findIndex(r => r.id === roleForm.value.id)
-      if (index !== -1) {
-        roles.value[index] = { ...roleForm.value }
-      }
-    } else {
-      const newId = roles.value.length > 0 ? Math.max(...roles.value.map(r => r.id)) + 1 : 1
-      roles.value.push({ ...roleForm.value, id: newId })
-    }
+    const res = await fetch(`${API_URL}/roles${isEditingRole.value ? '/' + roleForm.value.id : ''}`, {
+      method: isEditingRole.value ? 'PUT' : 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(roleForm.value)
+    })
+    
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Error al guardar el rol')
 
+    await cargarRoles()
     showRoleModal.value = false
     $q.notify({ type: 'positive', message: isEditingRole.value ? 'Rol actualizado correctamente.' : 'Rol creado exitosamente.' })
   } catch (error) {
     console.error('Error guardando el rol:', error)
-    $q.notify({ type: 'negative', message: 'Error al guardar el rol.' })
+    $q.notify({ type: 'negative', message: error.message || 'Error al guardar el rol.' })
   }
 }
 
@@ -447,16 +492,28 @@ const confirmDeleteRole = (rol) => {
     ok: { label: 'Eliminar', color: 'negative', unelevated: true },
     dark: true,
     persistent: true
-  }).onOk(() => {
-    // --- Lógica MOCK ---
-    // TODO: Reemplazar con llamada al backend (DELETE a /api/roles)
-    roles.value = roles.value.filter(r => r.id !== rol.id)
-    $q.notify({ type: 'positive', message: 'Rol eliminado correctamente.' })
+  }).onOk(async () => {
+    try {
+      const res = await fetch(`${API_URL}/roles/${rol.id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al eliminar')
+      }
+      await cargarRoles()
+      $q.notify({ type: 'positive', message: 'Rol eliminado correctamente.' })
+    } catch (error) {
+      console.error(error)
+      $q.notify({ type: 'negative', message: error.message || 'Error al eliminar el rol.' })
+    }
   })
 }
 
 onMounted(() => {
-  // Aquí cargaríamos datos iniciales de la DB: cargarRoles() y cargarUsuarios()
+  cargarRoles()
+  cargarUsuarios()
 })
 </script>
 

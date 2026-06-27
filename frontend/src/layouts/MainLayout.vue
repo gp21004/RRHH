@@ -157,13 +157,13 @@
             </q-item>
 
             <!-- Sección Usuarios (solo admin) -->
-            <template v-if="userRole === 'admin' || userRole === 'supervisor'">
+            <template v-if="isAdmin || userRole === 'supervisor'">
               <q-item-label header class="text-uppercase text-weight-bold text-grey">
                 Administración
               </q-item-label>
 
               <q-item
-                v-if="userRole === 'admin'"
+                v-if="isAdmin"
                 clickable
                 v-ripple
                 to="/usuarios"
@@ -196,7 +196,7 @@
               </q-item>
 
               <q-item
-                v-if="userRole === 'admin'"
+                v-if="isAdmin"
                 clickable
                 v-ripple
                 to="/configuracion"
@@ -243,7 +243,7 @@ import { useAuth } from 'src/stores/auth'
 
 const router = useRouter()
 const $q = useQuasar()
-const { state, userName, userRole, userInitials, logout } = useAuth()
+const { state, userName, userRole, isAdmin, userInitials, logout } = useAuth()
 
 const showDrawer = ref(true)
 

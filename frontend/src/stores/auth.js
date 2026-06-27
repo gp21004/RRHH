@@ -12,6 +12,10 @@ const state = reactive({
 const isAuthenticated = computed(() => !!state.token && !!state.user)
 const userName = computed(() => state.user?.nombreCompleto || 'Usuario')
 const userRole = computed(() => state.user?.rol || '')
+const isAdmin = computed(() => {
+  const rol = state.user?.rol?.toLowerCase() || ''
+  return rol === 'admin' || rol === 'administrador'
+})
 const userInitials = computed(() => {
   if (!state.user?.nombreCompleto) return 'U'
   const parts = state.user.nombreCompleto.split(' ')
@@ -132,6 +136,7 @@ export function useAuth() {
     isAuthenticated,
     userName,
     userRole,
+    isAdmin,
     userInitials,
     loadSession,
     login,
